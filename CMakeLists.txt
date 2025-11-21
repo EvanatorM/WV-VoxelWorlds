@@ -14,7 +14,7 @@ set_target_properties(WVVoxelWorlds PROPERTIES
 
 target_include_directories(WVVoxelWorlds PUBLIC include)
 
-include(${CMAKE_SOURCE_DIR}/cmake/modules.cmake OPTIONAL)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules.cmake OPTIONAL)
 
 target_compile_definitions(WVVoxelWorlds PUBLIC
 $<$<CONFIG:Debug>:DEBUG_MODE>
