@@ -19,7 +19,7 @@ target_include_directories(WVVoxelWorlds PUBLIC
 
 target_compile_features(WVVoxelWorlds PUBLIC cxx_std_20)
 
-include(${CMAKE_SOURCE_DIR}/cmake/modules.cmake OPTIONAL)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules.cmake OPTIONAL)
 
 target_compile_definitions(WVVoxelWorlds PUBLIC
 $<$<CONFIG:Debug>:DEBUG_MODE>
