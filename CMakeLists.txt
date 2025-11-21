@@ -12,7 +12,12 @@ set_target_properties(WVVoxelWorlds PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
-target_include_directories(WVVoxelWorlds PUBLIC include)
+target_include_directories(WVVoxelWorlds PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>    
+)
+
+target_compile_features(WVVoxelWorlds PUBLIC cxx_std_20)
 
 include(${CMAKE_SOURCE_DIR}/cmake/modules.cmake OPTIONAL)
 
