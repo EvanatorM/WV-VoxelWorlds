@@ -9,10 +9,6 @@ add_library(WVVoxelWorlds STATIC
     src/voxel_worlds/ChunkRenderer.cpp
 )
 
-set_target_properties(WVVoxelWorlds PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
-
 target_include_directories(WVVoxelWorlds PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>    

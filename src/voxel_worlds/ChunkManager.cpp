@@ -5,7 +5,7 @@
 
 namespace WillowVox
 {
-    ChunkManager::ChunkManager(WorldGen& worldGen, int worldSizeX, int worldMinY, int worldMaxY, int worldSizeZ)
+    ChunkManager::ChunkManager(WorldGen* worldGen, int worldSizeX, int worldMinY, int worldMaxY, int worldSizeZ)
         : m_worldGen(worldGen), m_worldSizeX(worldSizeX), m_worldMinY(worldMinY), m_worldMaxY(worldMaxY), m_worldSizeZ(worldSizeZ)
     {
         // Load assets
@@ -174,7 +174,7 @@ namespace WillowVox
 #endif
 
             auto data = new ChunkData();
-            m_worldGen.Generate(data, chunkPos);
+            m_worldGen->Generate(data, chunkPos);
 
             m_chunkData[id] = data;
 

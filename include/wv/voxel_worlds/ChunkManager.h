@@ -1,5 +1,6 @@
 #pragma once
 
+#include <wv/voxel_worlds/WorldGen.h>
 #include <wv/voxel_worlds/ChunkRenderer.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
@@ -13,7 +14,7 @@ namespace WillowVox
     class ChunkManager
     {
     public:
-        ChunkManager(WorldGen& worldGen, int worldSizeX = 0, int worldMinY = 0, int worldMaxY = 0, int worldSizeZ = 0);
+        ChunkManager(WorldGen* worldGen, int worldSizeX = 0, int worldMinY = 0, int worldMaxY = 0, int worldSizeZ = 0);
         ~ChunkManager();
 
         ChunkData* GetChunkData(int x, int y, int z);
@@ -84,7 +85,7 @@ namespace WillowVox
         ChunkData* GetOrGenerateChunkData(const glm::ivec3& id);
         void ChunkThread();
 
-        WorldGen& m_worldGen;
+        WorldGen* m_worldGen;
 
         Camera* m_camera = nullptr;
         int m_renderDistance, m_renderHeight;
