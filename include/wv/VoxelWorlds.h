@@ -1,5 +1,7 @@
 #pragma once
 
+#include <wv/physics/VoxelRaycast.h>
+
 #include <wv/voxel_worlds/Block.h>
 #include <wv/voxel_worlds/BlockRegistry.h>
 #include <wv/voxel_worlds/ChunkData.h>
