@@ -15,15 +15,15 @@ namespace WillowVox
             glm::vec2 texPos;
         };
 
-        ChunkRenderer(ChunkData* chunkData, const glm::ivec3& chunkId);
+        ChunkRenderer(std::shared_ptr<ChunkData> chunkData, const glm::ivec3& chunkId);
         ~ChunkRenderer();
 
-        void SetNorthData(ChunkData* data) { m_northChunkData = data; }
-        void SetSouthData(ChunkData* data) { m_southChunkData = data; }
-        void SetEastData(ChunkData* data) { m_eastChunkData = data; }
-        void SetWestData(ChunkData* data) { m_westChunkData = data; }
-        void SetUpData(ChunkData* data) { m_upChunkData = data; }
-        void SetDownData(ChunkData* data) { m_downChunkData = data; }
+        void SetNorthData(std::shared_ptr<ChunkData> data) { m_northChunkData = data; }
+        void SetSouthData(std::shared_ptr<ChunkData> data) { m_southChunkData = data; }
+        void SetEastData(std::shared_ptr<ChunkData> data) { m_eastChunkData = data; }
+        void SetWestData(std::shared_ptr<ChunkData> data) { m_westChunkData = data; }
+        void SetUpData(std::shared_ptr<ChunkData> data) { m_upChunkData = data; }
+        void SetDownData(std::shared_ptr<ChunkData> data) { m_downChunkData = data; }
 
         void Render();
 
@@ -34,24 +34,27 @@ namespace WillowVox
         static int m_meshesGenerated;
 #endif
 
+        glm::ivec3 m_chunkId;
+        glm::vec3 m_chunkPos;
+        
+        std::atomic<bool> m_isGeneratingMesh;
+        std::mutex m_generationMutex;
+
     private:
-        ChunkData* m_chunkData;
+        std::shared_ptr<ChunkData> m_chunkData;
         std::unique_ptr<VertexArrayObject> m_vao;
 
-        ChunkData* m_northChunkData = nullptr;
-        ChunkData* m_southChunkData = nullptr;
-        ChunkData* m_eastChunkData = nullptr;
-        ChunkData* m_westChunkData = nullptr;
-        ChunkData* m_upChunkData = nullptr;
-        ChunkData* m_downChunkData = nullptr;
+        std::shared_ptr<ChunkData> m_northChunkData = nullptr;
+        std::shared_ptr<ChunkData> m_southChunkData = nullptr;
+        std::shared_ptr<ChunkData> m_eastChunkData = nullptr;
+        std::shared_ptr<ChunkData> m_westChunkData = nullptr;
+        std::shared_ptr<ChunkData> m_upChunkData = nullptr;
+        std::shared_ptr<ChunkData> m_downChunkData = nullptr;
 
         std::shared_ptr<Shader> m_chunkShader;
 
         std::vector<ChunkVertex> m_vertices;
         std::vector<int> m_indices;
         bool m_dirty = true;
-
-        glm::ivec3 m_chunkId;
-        glm::vec3 m_chunkPos;
     };
 }

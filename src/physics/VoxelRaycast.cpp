@@ -24,7 +24,7 @@ namespace WillowVox
 
                 if (!lastChunkData || lastChunkId != chunkId)
                 {
-                    lastChunkData = chunkManager.GetChunkData(chunkId);
+                    lastChunkData = chunkManager.GetChunkData(chunkId).get();
                     lastChunkId = chunkId;
                 }
 

@@ -17,13 +17,13 @@ namespace WillowVox
         ChunkManager(WorldGen* worldGen, int numChunkThreads, int worldSizeX = 0, int worldMinY = 0, int worldMaxY = 0, int worldSizeZ = 0);
         ~ChunkManager();
 
-        ChunkData* GetChunkData(int x, int y, int z);
-        ChunkData* GetChunkData(const glm::ivec3& id);
-        ChunkData* GetChunkDataAtPos(float x, float y, float z);
+        std::shared_ptr<ChunkData> GetChunkData(int x, int y, int z);
+        std::shared_ptr<ChunkData> GetChunkData(const glm::ivec3& id);
+        std::shared_ptr<ChunkData> GetChunkDataAtPos(float x, float y, float z);
 
-        ChunkRenderer* GetChunkRenderer(int x, int y, int z);
-        ChunkRenderer* GetChunkRenderer(const glm::ivec3& id);
-        ChunkRenderer* GetChunkRendererAtPos(float x, float y, float z);
+        std::shared_ptr<ChunkRenderer> GetChunkRenderer(int x, int y, int z);
+        std::shared_ptr<ChunkRenderer> GetChunkRenderer(const glm::ivec3& id);
+        std::shared_ptr<ChunkRenderer> GetChunkRendererAtPos(float x, float y, float z);
 
         BlockId GetBlockId(float x, float y, float z);
 
@@ -82,7 +82,7 @@ namespace WillowVox
 #endif
 
     private:
-        ChunkData* GetOrGenerateChunkData(const glm::ivec3& id);
+        std::shared_ptr<ChunkData> GetOrGenerateChunkData(const glm::ivec3& id);
         void ChunkThread();
 
         WorldGen* m_worldGen;
@@ -91,12 +91,12 @@ namespace WillowVox
         int m_renderDistance, m_renderHeight;
         std::queue<glm::ivec3> m_chunkQueue;
 
-        std::unordered_map<glm::ivec3, ChunkData*> m_chunkData;
+        std::unordered_map<glm::ivec3, std::shared_ptr<ChunkData>> m_chunkData;
         std::mutex m_chunkDataMutex;
-        std::unordered_map<glm::ivec3, ChunkRenderer*> m_chunkRenderers;
+        std::unordered_map <glm::ivec3, std::shared_ptr<ChunkRenderer>> m_chunkRenderers;
         std::mutex m_chunkRendererMutex;
 
-        std::queue<ChunkRenderer*> m_chunkRendererDeletionQueue;
+        std::queue<std::shared_ptr<ChunkRenderer>> m_chunkRendererDeletionQueue;
         std::mutex m_chunkRendererDeletionMutex;
 
         int m_worldSizeX, m_worldMinY, m_worldMaxY, m_worldSizeZ;

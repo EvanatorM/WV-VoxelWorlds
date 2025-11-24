@@ -28,6 +28,23 @@ namespace WillowVox
         m_chunkThreadPool.Stop();
     }
 
+    inline void StartChunkMeshJob(ThreadPool& pool, std::shared_ptr<ChunkRenderer> renderer)
+    {
+        if (!renderer)
+            return;
+
+        std::weak_ptr<ChunkRenderer> weakChunkPtr = renderer;
+        pool.QueueJob([weakChunkPtr] {
+            if (auto chunkPtr = weakChunkPtr.lock())
+            {
+                std::lock_guard<std::mutex> lock(chunkPtr->m_generationMutex);
+                chunkPtr->m_isGeneratingMesh = true;
+                chunkPtr->GenerateMesh();
+                chunkPtr->m_isGeneratingMesh = false;
+            }
+        });
+    }
+
     void ChunkManager::SetBlockId(float x, float y, float z, BlockId blockId)
     {
         auto chunkId = WorldToChunkId(x, y, z);
@@ -42,73 +59,66 @@ namespace WillowVox
             if (localPos.x == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x - 1, chunkId.y, chunkId.z);
-                if (renderer)
-                    m_chunkThreadPool.QueueJob([renderer] { renderer->GenerateMesh(); });
+                StartChunkMeshJob(m_chunkThreadPool, renderer);
             }
             else if (localPos.x == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x + 1, chunkId.y, chunkId.z);
-                if (renderer)
-                    m_chunkThreadPool.QueueJob([renderer] { renderer->GenerateMesh(); });
+                StartChunkMeshJob(m_chunkThreadPool, renderer);
             }
             if (localPos.y == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y - 1, chunkId.z);
-                if (renderer)
-                    m_chunkThreadPool.QueueJob([renderer] { renderer->GenerateMesh(); });
+                StartChunkMeshJob(m_chunkThreadPool, renderer);
             }
             else if (localPos.y == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y + 1, chunkId.z);
-                if (renderer)
-                    m_chunkThreadPool.QueueJob([renderer] { renderer->GenerateMesh(); });
+                StartChunkMeshJob(m_chunkThreadPool, renderer);
             }
             if (localPos.z == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y, chunkId.z - 1);
-                if (renderer)
-                    m_chunkThreadPool.QueueJob([renderer] { renderer->GenerateMesh(); });
+                StartChunkMeshJob(m_chunkThreadPool, renderer);
             }
             else if (localPos.z == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y, chunkId.z + 1);
-                if (renderer)
-                    m_chunkThreadPool.QueueJob([renderer] { renderer->GenerateMesh(); });
+                StartChunkMeshJob(m_chunkThreadPool, renderer);
             }
 
             {
                 auto renderer = GetChunkRenderer(chunkId);
-                if (renderer)
-                    m_chunkThreadPool.QueueJob([renderer] { renderer->GenerateMesh(); });
+                StartChunkMeshJob(m_chunkThreadPool, renderer);
             }
         }
     }
 
-    ChunkData* ChunkManager::GetChunkData(int x, int y, int z)
+    std::shared_ptr<ChunkData> ChunkManager::GetChunkData(int x, int y, int z)
     {
         return GetChunkData({ x, y, z });
     }
 
-    ChunkData* ChunkManager::GetChunkDataAtPos(float x, float y, float z)
+    std::shared_ptr<ChunkData> ChunkManager::GetChunkDataAtPos(float x, float y, float z)
     {
         auto chunkId = WorldToChunkId(x, y, z);
 
         return GetChunkData(chunkId);
     }
 
-    ChunkRenderer* ChunkManager::GetChunkRenderer(int x, int y, int z)
+    std::shared_ptr<ChunkRenderer> ChunkManager::GetChunkRenderer(int x, int y, int z)
     {
         return GetChunkRenderer({ x, y, z });
     }
 
-    ChunkRenderer* ChunkManager::GetChunkRendererAtPos(float x, float y, float z)
+    std::shared_ptr<ChunkRenderer> ChunkManager::GetChunkRendererAtPos(float x, float y, float z)
     {
         auto chunkId = WorldToChunkId(x, y, z);
 
         return GetChunkRenderer(chunkId);
     }
 
-    ChunkData* ChunkManager::GetChunkData(const glm::ivec3& id)
+    std::shared_ptr<ChunkData> ChunkManager::GetChunkData(const glm::ivec3& id)
     {
         std::lock_guard<std::mutex> chunkDataLock(m_chunkDataMutex);
         if (m_chunkData.find(id) != m_chunkData.end())
@@ -117,7 +127,7 @@ namespace WillowVox
         return nullptr;
     }
 
-    ChunkRenderer* ChunkManager::GetChunkRenderer(const glm::ivec3& id)
+    std::shared_ptr<ChunkRenderer> ChunkManager::GetChunkRenderer(const glm::ivec3& id)
     {
         std::lock_guard<std::mutex> chunkRendererLock(m_chunkRendererMutex);
         if (m_chunkRenderers.find(id) != m_chunkRenderers.end())
@@ -130,7 +140,7 @@ namespace WillowVox
     {
         auto chunkId = WorldToChunkId(x, y, z);
 
-        ChunkData* chunkData = GetChunkData(chunkId);
+        auto chunkData = GetChunkData(chunkId);
         if (!chunkData)
             return 0;
 
@@ -145,7 +155,6 @@ namespace WillowVox
             std::lock_guard<std::mutex> lock(m_chunkRendererDeletionMutex);
             while (!m_chunkRendererDeletionQueue.empty())
             {
-                delete m_chunkRendererDeletionQueue.front();
                 m_chunkRendererDeletionQueue.pop();
             }
         }
@@ -161,7 +170,7 @@ namespace WillowVox
         }
     }
 
-    ChunkData* ChunkManager::GetOrGenerateChunkData(const glm::ivec3& id)
+    std::shared_ptr<ChunkData> ChunkManager::GetOrGenerateChunkData(const glm::ivec3& id)
     {
         std::lock_guard<std::mutex> chunkDataLock(m_chunkDataMutex);
         if (m_chunkData.find(id) != m_chunkData.end())
@@ -178,8 +187,8 @@ namespace WillowVox
             auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-            auto data = new ChunkData();
-            m_worldGen->Generate(data, chunkPos);
+            auto data = std::make_shared<ChunkData>();
+            m_worldGen->Generate(data.get(), chunkPos);
 
             m_chunkData[id] = data;
 
@@ -330,7 +339,6 @@ namespace WillowVox
                             m_chunkRenderers.find({ id.x, id.y, id.z + 1 }) == m_chunkRenderers.end() &&
                             m_chunkRenderers.find({ id.x, id.y, id.z - 1 }) == m_chunkRenderers.end())
                         {
-                            delete it->second;
                             it = m_chunkData.erase(it);
                         }
                         else
@@ -356,10 +364,10 @@ namespace WillowVox
                 }
 
                 // Create chunk data
-                ChunkData* data = GetOrGenerateChunkData(id);
+                auto data = GetOrGenerateChunkData(id);
 
                 // Create chunk renderer
-                auto chunk = new ChunkRenderer(m_chunkData[id], id);
+                auto chunk = std::make_shared<ChunkRenderer>(m_chunkData[id], id);
 
                 // Set neighboring chunks
                 chunk->SetSouthData(GetOrGenerateChunkData({ id.x, id.y, id.z + 1 }));
@@ -370,8 +378,7 @@ namespace WillowVox
                 chunk->SetDownData(GetOrGenerateChunkData({ id.x, id.y - 1, id.z }));
 
                 // Generate chunk mesh data
-                m_chunkThreadPool.QueueJob([chunk] { chunk->GenerateMesh(); });
-                //chunk->GenerateMesh();
+                StartChunkMeshJob(m_chunkThreadPool, chunk);
 
                 // Add chunk to map
                 std::lock_guard<std::mutex> lock(m_chunkRendererMutex);

@@ -9,8 +9,8 @@ namespace WillowVox
     int ChunkRenderer::m_meshesGenerated = 0;
 #endif
 
-    ChunkRenderer::ChunkRenderer(ChunkData* chunkData, const glm::ivec3& chunkId)
-        : m_chunkData(chunkData), m_chunkId(chunkId), m_chunkPos(chunkId* CHUNK_SIZE)
+    ChunkRenderer::ChunkRenderer(std::shared_ptr<ChunkData> chunkData, const glm::ivec3& chunkId)
+        : m_chunkData(chunkData), m_chunkId(chunkId), m_chunkPos(chunkId* CHUNK_SIZE), m_isGeneratingMesh(false)
     {
         auto& am = AssetManager::GetInstance();
         m_chunkShader = am.GetAsset<Shader>("chunk_shader");
