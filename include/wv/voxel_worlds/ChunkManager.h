@@ -14,7 +14,7 @@ namespace WillowVox
     class ChunkManager
     {
     public:
-        ChunkManager(WorldGen* worldGen, int worldSizeX = 0, int worldMinY = 0, int worldMaxY = 0, int worldSizeZ = 0);
+        ChunkManager(WorldGen* worldGen, int numChunkThreads, int worldSizeX = 0, int worldMinY = 0, int worldMaxY = 0, int worldSizeZ = 0);
         ~ChunkManager();
 
         ChunkData* GetChunkData(int x, int y, int z);
@@ -106,5 +106,7 @@ namespace WillowVox
 
         std::thread m_chunkThread;
         bool m_chunkThreadShouldStop = false;
+
+        ThreadPool m_chunkThreadPool;
     };
 }
