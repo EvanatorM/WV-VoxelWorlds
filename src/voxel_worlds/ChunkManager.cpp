@@ -28,7 +28,7 @@ namespace WillowVox
         m_chunkThreadPool.Stop();
     }
 
-    inline void StartChunkMeshJob(ThreadPool& pool, std::shared_ptr<ChunkRenderer> renderer)
+    inline void StartChunkMeshJob(ThreadPool& pool, std::shared_ptr<ChunkRenderer> renderer, bool highPriority = false)
     {
         if (!renderer)
             return;
@@ -42,7 +42,7 @@ namespace WillowVox
                 chunkPtr->GenerateMesh();
                 chunkPtr->m_isGeneratingMesh = false;
             }
-        });
+        }, highPriority);
     }
 
     void ChunkManager::SetBlockId(float x, float y, float z, BlockId blockId)
@@ -59,37 +59,37 @@ namespace WillowVox
             if (localPos.x == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x - 1, chunkId.y, chunkId.z);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                StartChunkMeshJob(m_chunkThreadPool, renderer, true);
             }
             else if (localPos.x == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x + 1, chunkId.y, chunkId.z);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                StartChunkMeshJob(m_chunkThreadPool, renderer, true);
             }
             if (localPos.y == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y - 1, chunkId.z);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                StartChunkMeshJob(m_chunkThreadPool, renderer, true);
             }
             else if (localPos.y == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y + 1, chunkId.z);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                StartChunkMeshJob(m_chunkThreadPool, renderer, true);
             }
             if (localPos.z == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y, chunkId.z - 1);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                StartChunkMeshJob(m_chunkThreadPool, renderer, true);
             }
             else if (localPos.z == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y, chunkId.z + 1);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                StartChunkMeshJob(m_chunkThreadPool, renderer, true);
             }
 
             {
                 auto renderer = GetChunkRenderer(chunkId);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                StartChunkMeshJob(m_chunkThreadPool, renderer, true);
             }
         }
     }
