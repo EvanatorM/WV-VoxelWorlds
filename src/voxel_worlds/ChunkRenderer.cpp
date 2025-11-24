@@ -59,7 +59,7 @@ namespace WillowVox
         vertexCount += 4;
     }
 
-    void ChunkRenderer::GenerateMesh()
+    void ChunkRenderer::GenerateMesh(bool batch)
     {
 #ifdef DEBUG_MODE
         auto start = std::chrono::high_resolution_clock::now();
@@ -226,7 +226,8 @@ namespace WillowVox
             }
         }
 
-        m_dirty = true;
+        if (!batch)
+            m_dirty = true;
 
 #ifdef DEBUG_MODE
         auto end = std::chrono::high_resolution_clock::now();
