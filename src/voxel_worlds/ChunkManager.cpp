@@ -378,7 +378,8 @@ namespace WillowVox
                 chunk->SetDownData(GetOrGenerateChunkData({ id.x, id.y - 1, id.z }));
 
                 // Generate chunk mesh data
-                StartChunkMeshJob(m_chunkThreadPool, chunk);
+                //StartChunkMeshJob(m_chunkThreadPool, chunk);
+                chunk->GenerateMesh();
 
                 // Add chunk to map
                 std::lock_guard<std::mutex> lock(m_chunkRendererMutex);
