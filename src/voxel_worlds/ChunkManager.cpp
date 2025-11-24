@@ -6,7 +6,7 @@
 namespace WillowVox
 {
     ChunkManager::ChunkManager(WorldGen* worldGen, int numChunkThreads, int worldSizeX, int worldMinY, int worldMaxY, int worldSizeZ)
-        : m_worldGen(worldGen), m_worldSizeX(worldSizeX), m_worldMinY(worldMinY), m_worldMaxY(worldMaxY), m_worldSizeZ(worldSizeZ)
+        : m_worldGen(worldGen), m_chunkThreadPool(512), m_worldSizeX(worldSizeX), m_worldMinY(worldMinY), m_worldMaxY(worldMaxY), m_worldSizeZ(worldSizeZ)
     {
         // Load assets
         auto& am = AssetManager::GetInstance();
