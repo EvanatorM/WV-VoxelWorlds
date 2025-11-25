@@ -8,10 +8,12 @@
 
 namespace WillowVox
 {
+    class ChunkManager;
+
     struct ChunkData
     {
-        ChunkData(const glm::ivec3& id)
-            : id(id)
+        ChunkData(const glm::ivec3& id, ChunkManager* manager)
+            : id(id), chunkManager(manager)
         {
             blockRegistry = &BlockRegistry::GetInstance();
 
@@ -50,10 +52,12 @@ namespace WillowVox
                 lightEmitters.push_back({ x, y, z});
         }
 
-        inline void Clear(bool value = false) noexcept
+        inline void Clear() noexcept
         {
             for (auto& v : voxels)
-                v = value;
+                v = 0;
+            for (auto& v : lightLevels)
+                v = 0;
         }
 
         inline int GetLightLevel(int x, int y, int z) const noexcept
@@ -68,7 +72,7 @@ namespace WillowVox
             lightLevels[Index(x, y, z)] = value;
         }
 
-        void CalculateLighting(ChunkData** surroundingData);
+        void CalculateLighting();
 
         BlockId voxels[CHUNK_VOLUME];
         int lightLevels[CHUNK_VOLUME];
@@ -78,5 +82,9 @@ namespace WillowVox
 
     private:
         BlockRegistry* blockRegistry;
+
+        ChunkManager* chunkManager;
+        ChunkData* surroundingData[26];
+        bool surroundingDataCached = false;
     };
 }

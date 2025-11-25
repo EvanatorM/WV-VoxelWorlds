@@ -65,19 +65,7 @@ namespace WillowVox
         #ifdef DEBUG_MODE
         auto start = std::chrono::high_resolution_clock::now();
         #endif
-
-        // Calculate lighting
-        // ** This is temporary, don't yell at me ** //
-        ChunkData** dataToPass = new ChunkData*[6] {
-            m_upChunkData.get(),
-            m_downChunkData.get(),
-            m_northChunkData.get(),
-            m_southChunkData.get(),
-            m_eastChunkData.get(),
-            m_westChunkData.get()
-        };
-        m_chunkData->CalculateLighting(dataToPass);
-
+        
         m_vertices.clear();
         m_indices.clear();
         int vertexCount = 0;

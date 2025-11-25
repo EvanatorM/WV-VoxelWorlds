@@ -77,6 +77,26 @@ namespace WillowVox
         }, highPriority);
     }
 
+    inline void StartLightingRecalculationJob(ThreadPool& pool, std::shared_ptr<ChunkData> chunkData, std::shared_ptr<ChunkRenderer> renderer, bool highPriority = false)
+    {
+        if (!chunkData)
+            return;
+
+        std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
+        std::weak_ptr<ChunkRenderer> weakChunkRendererPtr = renderer;
+        pool.QueueJob([weakChunkDataPtr, weakChunkRendererPtr] {
+            if (auto chunkDataPtr = weakChunkDataPtr.lock())
+            {
+                chunkDataPtr->CalculateLighting();
+                if (auto chunkRendererPtr = weakChunkRendererPtr.lock())
+                {
+                    std::lock_guard<std::mutex> lock(chunkRendererPtr->m_generationMutex);
+                    chunkRendererPtr->GenerateMesh();
+                }
+            }
+        }, highPriority);
+    }
+
     void ChunkManager::SetBlockId(float x, float y, float z, BlockId blockId)
     {
         auto chunkId = WorldToChunkId(x, y, z);
@@ -92,32 +112,32 @@ namespace WillowVox
             chunksToRemesh.push_back(GetChunkRenderer(chunkId));
 
             // Remesh surrounding chunks if necessary
-            //if (localPos.x == 0)
+            if (localPos.x == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x - 1, chunkId.y, chunkId.z);
                 chunksToRemesh.push_back(renderer);
             }
-            //else if (localPos.x == CHUNK_SIZE - 1)
+            else if (localPos.x == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x + 1, chunkId.y, chunkId.z);
                 chunksToRemesh.push_back(renderer);
             }
-            //if (localPos.y == 0)
+            if (localPos.y == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y - 1, chunkId.z);
                 chunksToRemesh.push_back(renderer);
             }
-            //else if (localPos.y == CHUNK_SIZE - 1)
+            else if (localPos.y == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y + 1, chunkId.z);
                 chunksToRemesh.push_back(renderer);
             }
-            //if (localPos.z == 0)
+            if (localPos.z == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y, chunkId.z - 1);
                 chunksToRemesh.push_back(renderer);
             }
-            //else if (localPos.z == CHUNK_SIZE - 1)
+            else if (localPos.z == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y, chunkId.z + 1);
                 chunksToRemesh.push_back(renderer);
@@ -125,6 +145,25 @@ namespace WillowVox
 
             // Start remesh job
             StartBatchChunkMeshJob(m_chunkThreadPool, chunksToRemesh, true);
+
+            // Start recalculate lighting job for current and surrounding chunks
+            StartLightingRecalculationJob(m_chunkThreadPool, chunk, GetChunkRenderer(chunkId), true);
+
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    for (int dz = -1; dz <= 1; dz++)
+                    {
+                        if (dx == 0 && dy == 0 && dz == 0) continue;
+                        
+                        auto neighborChunkId = chunkId + glm::ivec3(dx, dy, dz);
+                        auto neighborChunkData = GetChunkData(neighborChunkId);
+                        auto neighborChunkRenderer = GetChunkRenderer(neighborChunkId);
+                        StartLightingRecalculationJob(m_chunkThreadPool, neighborChunkData, neighborChunkRenderer, true);
+                    }
+                }
+            }
         }
     }
 
@@ -221,7 +260,7 @@ namespace WillowVox
             auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-            auto data = std::make_shared<ChunkData>(id);
+            auto data = std::make_shared<ChunkData>(id, this);
             m_worldGen->Generate(data.get(), chunkPos);
 
             m_chunkData[id] = data;

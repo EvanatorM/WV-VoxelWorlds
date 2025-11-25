@@ -1,10 +1,12 @@
 #include <wv/voxel_worlds/ChunkData.h>
+
+#include <wv/voxel_worlds/ChunkManager.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
 namespace WillowVox
 {
-    void ChunkData::CalculateLighting(ChunkData** surroundingData)
+    void ChunkData::CalculateLighting()
     {
         struct LightEmission
         {
@@ -13,6 +15,24 @@ namespace WillowVox
             int z;
             int lightLevel;
         };
+
+        if (!surroundingDataCached)
+        {
+            // Cache surrounding chunks
+            int index = 0;
+            for (int z = -1; z <= 1; z++)
+            {
+                for (int y = -1; y <= 1; y++)
+                {
+                    for (int x = -1; x <= 1; x++)
+                    {
+                        if (x == 0 && y == 0 && z == 0) continue;
+                        surroundingData[index++] = chunkManager->GetChunkData(id + glm::ivec3(x, y, z)).get();
+                    }
+                }
+            }
+            surroundingDataCached = true;
+        }
 
         // Clear lighting data
         for (int i = 0; i < CHUNK_VOLUME; i++)
@@ -24,7 +44,7 @@ namespace WillowVox
             int lightLevel = blockRegistry->GetBlock(Get(emitter.x, emitter.y, emitter.z)).lightLevel;
             emissions.push({ emitter.x, emitter.y, emitter.z, lightLevel });
         }
-        for (int c = 0; c < 6; c++)
+        for (int c = 0; c < 26; c++)
         {
             if (!surroundingData[c]) continue;
             glm::ivec3 offset = (surroundingData[c]->id - id) * CHUNK_SIZE;
