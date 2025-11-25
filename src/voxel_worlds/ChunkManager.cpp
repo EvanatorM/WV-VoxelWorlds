@@ -28,7 +28,7 @@ namespace WillowVox
         m_chunkThreadPool.Stop();
     }
 
-    inline void StartChunkMeshJob(ThreadPool& pool, std::shared_ptr<ChunkRenderer> renderer)
+    inline void StartChunkMeshJob(ThreadPool& pool, std::shared_ptr<ChunkRenderer> renderer, bool highPriority = false)
     {
         if (!renderer)
             return;
@@ -42,7 +42,39 @@ namespace WillowVox
                 chunkPtr->GenerateMesh();
                 chunkPtr->m_isGeneratingMesh = false;
             }
-        });
+        }, highPriority);
+    }
+
+    inline void StartBatchChunkMeshJob(ThreadPool& pool, std::vector<std::shared_ptr<ChunkRenderer>> renderers, bool highPriority = false)
+    {
+        std::vector<std::weak_ptr<ChunkRenderer>> weakPtrs;
+        for (auto& r : renderers)
+        {
+            if (!r)
+                continue;
+            
+            std::weak_ptr<ChunkRenderer> weakChunkPtr = r;
+            weakPtrs.push_back(weakChunkPtr);
+        }
+
+        pool.QueueJob([weakPtrs] {
+            for (auto& weakChunkPtr : weakPtrs)
+            {
+                if (auto chunkPtr = weakChunkPtr.lock())
+                {
+                    std::lock_guard<std::mutex> lock(chunkPtr->m_generationMutex);
+                    chunkPtr->m_isGeneratingMesh = true;
+                    chunkPtr->GenerateMesh(true);
+                    chunkPtr->m_isGeneratingMesh = false;
+                }
+            }
+
+            for (auto& weakChunkPtr : weakPtrs)
+            {
+                if (auto chunkPtr = weakChunkPtr.lock())
+                    chunkPtr->MarkDirty();
+            }
+        }, highPriority);
     }
 
     void ChunkManager::SetBlockId(float x, float y, float z, BlockId blockId)
@@ -55,42 +87,44 @@ namespace WillowVox
         {
             chunk->Set(localPos.x, localPos.y, localPos.z, blockId);
 
+            // Get vector of chunks to remesh
+            std::vector<std::shared_ptr<ChunkRenderer>> chunksToRemesh;
+            chunksToRemesh.push_back(GetChunkRenderer(chunkId));
+
             // Remesh surrounding chunks if necessary
             if (localPos.x == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x - 1, chunkId.y, chunkId.z);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                chunksToRemesh.push_back(renderer);
             }
             else if (localPos.x == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x + 1, chunkId.y, chunkId.z);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                chunksToRemesh.push_back(renderer);
             }
             if (localPos.y == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y - 1, chunkId.z);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                chunksToRemesh.push_back(renderer);
             }
             else if (localPos.y == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y + 1, chunkId.z);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                chunksToRemesh.push_back(renderer);
             }
             if (localPos.z == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y, chunkId.z - 1);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                chunksToRemesh.push_back(renderer);
             }
             else if (localPos.z == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y, chunkId.z + 1);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
+                chunksToRemesh.push_back(renderer);
             }
 
-            {
-                auto renderer = GetChunkRenderer(chunkId);
-                StartChunkMeshJob(m_chunkThreadPool, renderer);
-            }
+            // Start remesh job
+            StartBatchChunkMeshJob(m_chunkThreadPool, chunksToRemesh, true);
         }
     }
 
@@ -378,7 +412,8 @@ namespace WillowVox
                 chunk->SetDownData(GetOrGenerateChunkData({ id.x, id.y - 1, id.z }));
 
                 // Generate chunk mesh data
-                StartChunkMeshJob(m_chunkThreadPool, chunk);
+                //StartChunkMeshJob(m_chunkThreadPool, chunk);
+                chunk->GenerateMesh();
 
                 // Add chunk to map
                 std::lock_guard<std::mutex> lock(m_chunkRendererMutex);

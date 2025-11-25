@@ -28,7 +28,8 @@ namespace WillowVox
 
         void Render();
 
-        void GenerateMesh();
+        void GenerateMesh(bool batch = false);
+        void MarkDirty() { m_dirty = true; }
 
 #ifdef DEBUG_MODE
         static float m_avgMeshGenTime;
