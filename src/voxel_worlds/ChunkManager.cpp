@@ -92,32 +92,32 @@ namespace WillowVox
             chunksToRemesh.push_back(GetChunkRenderer(chunkId));
 
             // Remesh surrounding chunks if necessary
-            if (localPos.x == 0)
+            //if (localPos.x == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x - 1, chunkId.y, chunkId.z);
                 chunksToRemesh.push_back(renderer);
             }
-            else if (localPos.x == CHUNK_SIZE - 1)
+            //else if (localPos.x == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x + 1, chunkId.y, chunkId.z);
                 chunksToRemesh.push_back(renderer);
             }
-            if (localPos.y == 0)
+            //if (localPos.y == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y - 1, chunkId.z);
                 chunksToRemesh.push_back(renderer);
             }
-            else if (localPos.y == CHUNK_SIZE - 1)
+            //else if (localPos.y == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y + 1, chunkId.z);
                 chunksToRemesh.push_back(renderer);
             }
-            if (localPos.z == 0)
+            //if (localPos.z == 0)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y, chunkId.z - 1);
                 chunksToRemesh.push_back(renderer);
             }
-            else if (localPos.z == CHUNK_SIZE - 1)
+            //else if (localPos.z == CHUNK_SIZE - 1)
             {
                 auto renderer = GetChunkRenderer(chunkId.x, chunkId.y, chunkId.z + 1);
                 chunksToRemesh.push_back(renderer);
