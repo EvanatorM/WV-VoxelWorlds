@@ -1,6 +1,7 @@
 #pragma once
 
 #include <wv/voxel_worlds/Block.h>
+#include <wv/voxel_worlds/ChunkDefines.h>
 #include <wv/core.h>
 #include <stdexcept>
 

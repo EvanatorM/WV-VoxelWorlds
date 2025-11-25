@@ -2,20 +2,19 @@
 
 #include <wv/core.h>
 #include <wv/voxel_worlds/BlockRegistry.h>
+#include <wv/voxel_worlds/ChunkDefines.h>
 #include <cassert>
 #include <algorithm>
 
 namespace WillowVox
 {
-    constexpr int CHUNK_SIZE = 32;
-    constexpr int CHUNK_VOLUME = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
-    using BlockId = uint32_t;
-
     struct ChunkData
     {
         ChunkData()
         {
             blockRegistry = &BlockRegistry::GetInstance();
+
+            Clear();
         }
 
         static constexpr bool InBounds(int x, int y, int z) noexcept
