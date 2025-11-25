@@ -67,7 +67,15 @@ namespace WillowVox
         #endif
 
         // Calculate lighting
-        m_chunkData->CalculateLighting();
+        ChunkData** dataToPass = new ChunkData*[6] {
+            m_upChunkData.get(),
+            m_downChunkData.get(),
+            m_northChunkData.get(),
+            m_southChunkData.get(),
+            m_eastChunkData.get(),
+            m_westChunkData.get()
+        };
+        m_chunkData->CalculateLighting(dataToPass);
 
         m_vertices.clear();
         m_indices.clear();

@@ -2,7 +2,7 @@
 
 namespace WillowVox
 {
-    void ChunkData::CalculateLighting()
+    void ChunkData::CalculateLighting(ChunkData** surroundingData)
     {
         struct LightEmission
         {
@@ -22,6 +22,16 @@ namespace WillowVox
             int lightLevel = blockRegistry->GetBlock(Get(emitter.x, emitter.y, emitter.z)).lightLevel;
             emissions.push({ emitter.x, emitter.y, emitter.z, lightLevel });
         }
+        for (int c = 0; c < 6; c++)
+        {
+            if (!surroundingData[c]) continue;
+            for (auto& emitter : surroundingData[c]->lightEmitters)
+            {
+
+                int lightLevel = blockRegistry->GetBlock(Get(emitter.x, emitter.y, emitter.z)).lightLevel;
+                emissions.push({ emitter.x, emitter.y, emitter.z, lightLevel });
+            }
+        }
 
         while (!emissions.empty())
         {
@@ -30,6 +40,7 @@ namespace WillowVox
 
             if (emission.lightLevel <= 1) continue;
             int nextLightLevel = emission.lightLevel - 1;
+            //Logger::Log("Emission %d", nextLightLevel);
 
             std::vector<glm::ivec3> surroundingBlocks = {
                 { emission.x + 1, emission.y, emission.z },
@@ -42,12 +53,17 @@ namespace WillowVox
 
             for (auto& b : surroundingBlocks)
             {
-                if (!InBounds(b.x, b.y, b.z)) continue;
-                if (GetLightLevel(b.x, b.y, b.z) >= nextLightLevel) continue;
-                
-                SetLightLevel(b.x, b.y, b.z, nextLightLevel);
+                if (InBounds(b.x, b.y, b.z))
+                {
+                    if (GetLightLevel(b.x, b.y, b.z) >= nextLightLevel) continue;
+                    SetLightLevel(b.x, b.y, b.z, nextLightLevel);
 
-                if (Get(b.x, b.y, b.z) == 0)
+                    if (Get(b.x, b.y, b.z) == 0)
+                    {
+                        emissions.push({ b.x, b.y, b.z, nextLightLevel });
+                    }
+                }
+                else
                 {
                     emissions.push({ b.x, b.y, b.z, nextLightLevel });
                 }
