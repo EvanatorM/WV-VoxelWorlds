@@ -1,7 +1,6 @@
 #pragma once
 
 #include <wv/voxel_worlds/Block.h>
-#include <wv/voxel_worlds/ChunkData.h>
 #include <wv/core.h>
 #include <stdexcept>
 
@@ -16,7 +15,8 @@ namespace WillowVox
             return instance;
         }
 
-        void RegisterBlock(const std::string& strId, const std::string& texturePath)
+        void RegisterBlock(const std::string& strId, const std::string& texturePath,
+            bool lightEmitter = false, int lightLevel = 16)
         {
             // Get texture id if exists or add to texture map if not
             int texId;
@@ -30,12 +30,13 @@ namespace WillowVox
                 texId = it->second;
 
             // Set the temp block def texture to texture id
-            m_tempBlockRegistry[strId] = { texId, texId, texId };
+            m_tempBlockRegistry[strId] = { texId, texId, texId, lightEmitter, lightLevel };
         }
 
         void RegisterBlock(const std::string& strId, const std::string& topTexturePath,
             const std::string& bottomTexturePath,
-            const std::string& sideTexturePath)
+            const std::string& sideTexturePath,
+            bool lightEmitter = false, int lightLevel = 16)
         {
             // Get texture id if exists or add to texture map if not
             int topTexId, bottomTexId, sideTexId;
@@ -71,7 +72,7 @@ namespace WillowVox
             }
 
             // Set the temp block def texture to texture id
-            m_tempBlockRegistry[strId] = { topTexId, bottomTexId, sideTexId };
+            m_tempBlockRegistry[strId] = { topTexId, bottomTexId, sideTexId, lightEmitter, lightLevel };
         }
 
         void ApplyRegistry()
@@ -85,10 +86,12 @@ namespace WillowVox
             int atlasHeight = 2;
             while (atlasWidth * atlasHeight < numTextures)
             {
-                if (atlasWidth == atlasHeight)
-                    atlasWidth *= 2;
-                else
-                    atlasHeight *= 2;
+                //if (atlasWidth == atlasHeight)
+                //    atlasWidth *= 2;
+                //else
+                //    atlasHeight *= 2;
+                atlasWidth *= 2;
+                atlasHeight *= 2;
             }
 
             // Get size of textures
@@ -121,7 +124,7 @@ namespace WillowVox
 
                 // Get start coordinates
                 int xStart = (id % atlasWidth) * texWidth;
-                int yStart = (id / atlasWidth) * texHeight;
+                int yStart = (id / atlasHeight) * texHeight;
 
                 texPositions[id] = {
                     xStart / (float)atlasPixelsX,
@@ -146,6 +149,7 @@ namespace WillowVox
             am.AddAsset<Texture>("chunk_texture", tex);
 
             // Generate block definitions
+            m_blocks[0] = { "air", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0 };
             for (auto& [strId, tex] : m_tempBlockRegistry)
             {
                 auto& topPos = texPositions[tex.top];
@@ -154,7 +158,8 @@ namespace WillowVox
                 Block block(strId,
                     topPos.x, topPos.z, topPos.y, topPos.w,
                     bottomPos.x, bottomPos.z, bottomPos.y, bottomPos.w,
-                    sidePos.x, sidePos.z, sidePos.y, sidePos.w
+                    sidePos.x, sidePos.z, sidePos.y, sidePos.w,
+                    tex.lightEmitter, tex.lightLevel
                 );
                 m_blocks[++m_idCounter] = block;
                 m_strIdToNumId[strId] = m_idCounter;
@@ -191,6 +196,8 @@ namespace WillowVox
             int top;
             int bottom;
             int side;
+            bool lightEmitter;
+            int lightLevel;
         };
 
         std::unordered_map<std::string, BlockId> m_strIdToNumId;

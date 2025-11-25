@@ -13,6 +13,7 @@ namespace WillowVox
             glm::vec3 pos;
             glm::vec3 normal;
             glm::vec2 texPos;
+            int lightLevel;
         };
 
         ChunkRenderer(std::shared_ptr<ChunkData> chunkData, const glm::ivec3& chunkId);
