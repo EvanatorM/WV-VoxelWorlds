@@ -1,4 +1,6 @@
 #include <wv/voxel_worlds/ChunkData.h>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
 namespace WillowVox
 {
@@ -25,13 +27,26 @@ namespace WillowVox
         for (int c = 0; c < 6; c++)
         {
             if (!surroundingData[c]) continue;
+            glm::ivec3 offset = (surroundingData[c]->id - id) * CHUNK_SIZE;
             for (auto& emitter : surroundingData[c]->lightEmitters)
             {
-
-                int lightLevel = blockRegistry->GetBlock(Get(emitter.x, emitter.y, emitter.z)).lightLevel;
-                emissions.push({ emitter.x, emitter.y, emitter.z, lightLevel });
+                glm::ivec3 emitterOffset = { offset.x + emitter.x, offset.y + emitter.y, offset.z + emitter.z };
+                glm::ivec3 worldPos = id * CHUNK_SIZE;
+                int lightLevel = blockRegistry->GetBlock(surroundingData[c]->Get(emitter.x, emitter.y, emitter.z)).lightLevel;
+                /*Logger::Log("ID: %d %d %d / %d %d %d, Offset: %d %d %d, Emitter Offset: %d %d %d (Local: %d %d %d, World: %d %d %d). Calculated world pos: %d %d %d. Light Level: %d", id.x, id.y, id.z, 
+                    surroundingData[c]->id.x, surroundingData[c]->id.y, surroundingData[c]->id.z, 
+                    offset.x, offset.y, offset.z, 
+                    emitterOffset.x, emitterOffset.y, emitterOffset.z,
+                    emitter.x, emitter.y, emitter.z, 
+                    emitter.x + offset.x, emitter.y + offset.y, emitter.z + offset.z,
+                    emitterOffset.x + worldPos.x, emitterOffset.y + worldPos.y, emitterOffset.z + worldPos.z,
+                    lightLevel
+                );*/
+                emissions.push({ emitterOffset.x, emitterOffset.y, emitterOffset.z, lightLevel });
             }
         }
+
+        std::unordered_map<glm::ivec3, int> outOfBoundsLightLevels;
 
         while (!emissions.empty())
         {
@@ -65,6 +80,17 @@ namespace WillowVox
                 }
                 else
                 {
+                    int lightLevel;
+
+                    auto it = outOfBoundsLightLevels.find(b);
+                    if (it != outOfBoundsLightLevels.end())
+                        lightLevel = outOfBoundsLightLevels[b];
+                    else
+                        lightLevel = 0;
+
+                    if (lightLevel >= nextLightLevel) continue;
+                    outOfBoundsLightLevels[b] = nextLightLevel;
+
                     emissions.push({ b.x, b.y, b.z, nextLightLevel });
                 }
             }

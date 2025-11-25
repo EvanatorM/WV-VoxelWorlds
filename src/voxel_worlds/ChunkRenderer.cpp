@@ -67,6 +67,7 @@ namespace WillowVox
         #endif
 
         // Calculate lighting
+        // ** This is temporary, don't yell at me ** //
         ChunkData** dataToPass = new ChunkData*[6] {
             m_upChunkData.get(),
             m_downChunkData.get(),

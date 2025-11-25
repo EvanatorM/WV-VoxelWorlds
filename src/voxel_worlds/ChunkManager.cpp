@@ -221,7 +221,7 @@ namespace WillowVox
             auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-            auto data = std::make_shared<ChunkData>();
+            auto data = std::make_shared<ChunkData>(id);
             m_worldGen->Generate(data.get(), chunkPos);
 
             m_chunkData[id] = data;

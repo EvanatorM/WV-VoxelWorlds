@@ -10,7 +10,8 @@ namespace WillowVox
 {
     struct ChunkData
     {
-        ChunkData()
+        ChunkData(const glm::ivec3& id)
+            : id(id)
         {
             blockRegistry = &BlockRegistry::GetInstance();
 
@@ -72,6 +73,8 @@ namespace WillowVox
         BlockId voxels[CHUNK_VOLUME];
         int lightLevels[CHUNK_VOLUME];
         std::vector<glm::ivec3> lightEmitters;
+
+        glm::ivec3 id;
 
     private:
         BlockRegistry* blockRegistry;
