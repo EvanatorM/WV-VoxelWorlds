@@ -72,13 +72,15 @@ namespace WillowVox
             lightLevels[Index(x, y, z)] = value;
         }
 
-        void CalculateLighting();
+        void CalculateLighting(uint32_t currentVersion = 0);
 
         BlockId voxels[CHUNK_VOLUME];
         int lightLevels[CHUNK_VOLUME];
         std::vector<glm::ivec3> lightEmitters;
 
         glm::ivec3 id;
+
+        std::atomic<uint32_t> m_version = 0;
 
     private:
         BlockRegistry* blockRegistry;

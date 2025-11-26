@@ -10,7 +10,7 @@ namespace WillowVox
 #endif
 
     ChunkRenderer::ChunkRenderer(std::shared_ptr<ChunkData> chunkData, const glm::ivec3& chunkId)
-        : m_chunkData(chunkData), m_chunkId(chunkId), m_chunkPos(chunkId* CHUNK_SIZE), m_isGeneratingMesh(false)
+        : m_chunkData(chunkData), m_chunkId(chunkId), m_chunkPos(chunkId* CHUNK_SIZE)
     {
         auto& am = AssetManager::GetInstance();
         m_chunkShader = am.GetAsset<Shader>("chunk_shader");
@@ -61,8 +61,16 @@ namespace WillowVox
         vertexCount += 4;
     }
 
-    void ChunkRenderer::GenerateMesh(bool batch)
+    void ChunkRenderer::GenerateMesh(uint32_t currentVersion, bool batch)
     {
+        if (currentVersion == 0)
+            currentVersion = m_version;
+        if (currentVersion != m_version)
+        {
+            Logger::Log("Mesh generation aborted for chunk (%d, %d, %d) due to version change.", m_chunkId.x, m_chunkId.y, m_chunkId.z);
+            return; // Abort lighting calculation if version has changed
+        }
+
         #ifdef DEBUG_MODE
         auto start = std::chrono::high_resolution_clock::now();
         #endif
@@ -77,6 +85,12 @@ namespace WillowVox
         {
             for (int x = 0; x < CHUNK_SIZE; x++)
             {
+                if (currentVersion != m_version)
+                {
+                    Logger::Log("Mesh generation aborted for chunk (%d, %d, %d) due to version change.", m_chunkId.x, m_chunkId.y, m_chunkId.z);
+                    return; // Abort mesh generation if version has changed
+                }
+
                 for (int y = 0; y < CHUNK_SIZE; y++)
                 {
                     BlockId id = m_chunkData->Get(x, y, z);

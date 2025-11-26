@@ -37,10 +37,9 @@ namespace WillowVox
         pool.QueueJob([weakChunkPtr] {
             if (auto chunkPtr = weakChunkPtr.lock())
             {
+                uint32_t currentVersion = ++chunkPtr->m_version;
                 std::lock_guard<std::mutex> lock(chunkPtr->m_generationMutex);
-                chunkPtr->m_isGeneratingMesh = true;
-                chunkPtr->GenerateMesh();
-                chunkPtr->m_isGeneratingMesh = false;
+                chunkPtr->GenerateMesh(currentVersion);
             }
         }, highPriority);
     }
@@ -48,6 +47,7 @@ namespace WillowVox
     inline void StartBatchChunkMeshJob(ThreadPool& pool, std::vector<std::shared_ptr<ChunkRenderer>> renderers, bool highPriority = false)
     {
         std::vector<std::weak_ptr<ChunkRenderer>> weakPtrs;
+        std::vector<uint32_t> versions;
         for (auto& r : renderers)
         {
             if (!r)
@@ -55,17 +55,18 @@ namespace WillowVox
             
             std::weak_ptr<ChunkRenderer> weakChunkPtr = r;
             weakPtrs.push_back(weakChunkPtr);
+            versions.push_back(++r->m_version);
         }
 
-        pool.QueueJob([weakPtrs] {
-            for (auto& weakChunkPtr : weakPtrs)
+        pool.QueueJob([weakPtrs, versions, highPriority] {
+            for (size_t i = 0; i < weakPtrs.size(); ++i)
             {
+                auto& weakChunkPtr = weakPtrs[i];
+                uint32_t currentVersion = versions[i];
                 if (auto chunkPtr = weakChunkPtr.lock())
                 {
                     std::lock_guard<std::mutex> lock(chunkPtr->m_generationMutex);
-                    chunkPtr->m_isGeneratingMesh = true;
-                    chunkPtr->GenerateMesh(true);
-                    chunkPtr->m_isGeneratingMesh = false;
+                    chunkPtr->GenerateMesh(currentVersion, highPriority);
                 }
             }
 
@@ -77,45 +78,25 @@ namespace WillowVox
         }, highPriority);
     }
 
-    inline void StartLightingRecalculationJob(ThreadPool& pool, ChunkManager* chunkManager, std::shared_ptr<ChunkData> chunkData, std::shared_ptr<ChunkRenderer> renderer, bool highPriority = false)
+    inline void StartLightingRecalculationJob(ThreadPool& pool, std::shared_ptr<ChunkData> chunkData, std::shared_ptr<ChunkRenderer> renderer, bool highPriority = false)
     {
         if (!chunkData)
             return;
 
+        uint32_t currentVersion = ++chunkData->m_version;
         std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
         std::weak_ptr<ChunkRenderer> weakChunkRendererPtr = renderer;
-        pool.QueueJob([weakChunkDataPtr, weakChunkRendererPtr, &pool, chunkManager] {
+        pool.QueueJob([weakChunkDataPtr, weakChunkRendererPtr, currentVersion] {
             if (auto chunkDataPtr = weakChunkDataPtr.lock())
             {
-                chunkDataPtr->CalculateLighting();
+                {
+                    chunkDataPtr->CalculateLighting(currentVersion);
+                }
                 if (auto chunkRendererPtr = weakChunkRendererPtr.lock())
                 {
+                    uint32_t currentVersion = ++chunkRendererPtr->m_version;
                     std::lock_guard<std::mutex> lock(chunkRendererPtr->m_generationMutex);
-                    chunkRendererPtr->GenerateMesh();
-                }
-
-                for (int dx = -1; dx <= 1; dx++)
-                {
-                    for (int dy = -1; dy <= 1; dy++)
-                    {
-                        for (int dz = -1; dz <= 1; dz++)
-                        {
-                            if (dx == 0 && dy == 0 && dz == 0) continue;
-
-                            auto neighborChunkId = chunkDataPtr->id + glm::ivec3(dx, dy, dz);
-                            auto neighborChunkData = chunkManager->GetChunkData(neighborChunkId);
-                            auto neighborChunkRenderer = chunkManager->GetChunkRenderer(neighborChunkId);
-
-                            if (neighborChunkData)
-                                neighborChunkData->CalculateLighting();
-
-                            if (neighborChunkRenderer)
-                            {
-                                std::lock_guard<std::mutex> lock(neighborChunkRenderer->m_generationMutex);
-                                neighborChunkRenderer->GenerateMesh();
-                            }
-                        }
-                    }
+                    chunkRendererPtr->GenerateMesh(currentVersion);
                 }
             }
         }, highPriority);
@@ -171,7 +152,23 @@ namespace WillowVox
             StartBatchChunkMeshJob(m_chunkThreadPool, chunksToRemesh, true);
 
             // Start recalculate lighting job for current and surrounding chunks
-            StartLightingRecalculationJob(m_chunkThreadPool, this, chunk, GetChunkRenderer(chunkId));
+            StartLightingRecalculationJob(m_chunkThreadPool, chunk, GetChunkRenderer(chunkId));
+
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    for (int dz = -1; dz <= 1; dz++)
+                    {
+                        if (dx == 0 && dy == 0 && dz == 0) continue;
+
+                        auto neighborChunkId = chunkId + glm::ivec3(dx, dy, dz);
+                        auto neighborChunkData = GetChunkData(neighborChunkId);
+                        auto neighborChunkRenderer = GetChunkRenderer(neighborChunkId);
+                        StartLightingRecalculationJob(m_chunkThreadPool, neighborChunkData, neighborChunkRenderer);
+                    }
+                }
+            }
         }
     }
 

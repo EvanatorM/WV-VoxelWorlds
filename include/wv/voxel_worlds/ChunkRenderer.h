@@ -28,7 +28,7 @@ namespace WillowVox
 
         void Render();
 
-        void GenerateMesh(bool batch = false);
+        void GenerateMesh(uint32_t currentVersion = 0, bool batch = false);
         void MarkDirty() { m_dirty = true; }
 
 #ifdef DEBUG_MODE
@@ -39,9 +39,10 @@ namespace WillowVox
         glm::ivec3 m_chunkId;
         glm::vec3 m_chunkPos;
         
-        std::atomic<bool> m_isGeneratingMesh;
         std::mutex m_generationMutex;
         std::mutex m_meshDataMutex;
+
+        std::atomic<uint32_t> m_version = 0;
 
     private:
         std::shared_ptr<ChunkData> m_chunkData;
