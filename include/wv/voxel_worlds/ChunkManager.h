@@ -7,6 +7,7 @@
 #include <wv/core.h>
 #include <thread>
 #include <mutex>
+#include <shared_mutex>
 #include <queue>
 
 namespace WillowVox
@@ -92,9 +93,9 @@ namespace WillowVox
         std::queue<glm::ivec3> m_chunkQueue;
 
         std::unordered_map<glm::ivec3, std::shared_ptr<ChunkData>> m_chunkData;
-        std::mutex m_chunkDataMutex;
+        std::shared_mutex m_chunkDataMutex;
         std::unordered_map <glm::ivec3, std::shared_ptr<ChunkRenderer>> m_chunkRenderers;
-        std::mutex m_chunkRendererMutex;
+        std::shared_mutex m_chunkRendererMutex;
 
         std::queue<std::shared_ptr<ChunkRenderer>> m_chunkRendererDeletionQueue;
         std::mutex m_chunkRendererDeletionMutex;

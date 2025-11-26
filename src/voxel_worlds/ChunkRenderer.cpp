@@ -36,6 +36,7 @@ namespace WillowVox
         // Buffer data is dirty
         if (m_dirty)
         {
+            std::lock_guard<std::mutex> lock(m_meshDataMutex);
             m_vao->BufferVertexData(m_vertices.size() * sizeof(ChunkVertex), m_vertices.data());
             m_vao->BufferElementData(ElementBufferAttribType::UINT32, m_indices.size(), m_indices.data());
             m_dirty = false;
@@ -232,8 +233,11 @@ namespace WillowVox
         if (!batch)
             m_dirty = true;
 
-        std::swap(m_vertices, vertices);
-        std::swap(m_indices, indices);
+        {
+            std::lock_guard<std::mutex> lock(m_meshDataMutex);
+            std::swap(m_vertices, vertices);
+            std::swap(m_indices, indices);
+        }
 
         #ifdef DEBUG_MODE
         auto end = std::chrono::high_resolution_clock::now();

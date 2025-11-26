@@ -41,6 +41,7 @@ namespace WillowVox
         
         std::atomic<bool> m_isGeneratingMesh;
         std::mutex m_generationMutex;
+        std::mutex m_meshDataMutex;
 
     private:
         std::shared_ptr<ChunkData> m_chunkData;

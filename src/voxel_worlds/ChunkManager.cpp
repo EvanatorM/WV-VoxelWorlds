@@ -201,7 +201,7 @@ namespace WillowVox
 
     std::shared_ptr<ChunkData> ChunkManager::GetChunkData(const glm::ivec3& id)
     {
-        std::lock_guard<std::mutex> chunkDataLock(m_chunkDataMutex);
+        std::shared_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
         if (m_chunkData.find(id) != m_chunkData.end())
             return m_chunkData[id];
 
@@ -210,7 +210,7 @@ namespace WillowVox
 
     std::shared_ptr<ChunkRenderer> ChunkManager::GetChunkRenderer(const glm::ivec3& id)
     {
-        std::lock_guard<std::mutex> chunkRendererLock(m_chunkRendererMutex);
+        std::shared_lock<std::shared_mutex> chunkRendererLock(m_chunkRendererMutex);
         if (m_chunkRenderers.find(id) != m_chunkRenderers.end())
             return m_chunkRenderers[id];
 
@@ -243,7 +243,7 @@ namespace WillowVox
         m_chunkShader->Bind();
         m_chunkTexture->BindTexture(Texture::TEX00);
         {
-            std::lock_guard<std::mutex> lock(m_chunkRendererMutex);
+            std::shared_lock<std::shared_mutex> lock(m_chunkRendererMutex);
             for (auto [id, chunk] : m_chunkRenderers)
             {
                 chunk->Render();
@@ -253,37 +253,47 @@ namespace WillowVox
 
     std::shared_ptr<ChunkData> ChunkManager::GetOrGenerateChunkData(const glm::ivec3& id)
     {
-        std::lock_guard<std::mutex> chunkDataLock(m_chunkDataMutex);
-        if (m_chunkData.find(id) != m_chunkData.end())
+        // Get chunk data if it already exists
         {
-            return m_chunkData[id];
+            std::shared_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
+            auto it = m_chunkData.find(id);
+            if (it != m_chunkData.end())
+            {
+                return it->second;
+            }
         }
-        else if ((m_worldSizeX == 0 || (id.x >= -m_worldSizeX && id.x <= m_worldSizeX)) &&
+
+        // Check if chunk is within world bounds
+        if (!((m_worldSizeX == 0 || (id.x >= -m_worldSizeX && id.x <= m_worldSizeX)) &&
             (m_worldMinY == 0 || id.y >= -m_worldMinY) && (m_worldMaxY == 0 || id.y <= m_worldMaxY) &&
-            (m_worldSizeZ == 0 || (id.z >= -m_worldSizeZ && id.z <= m_worldSizeZ)))
+            (m_worldSizeZ == 0 || (id.z >= -m_worldSizeZ && id.z <= m_worldSizeZ))))
         {
-            auto chunkPos = id * CHUNK_SIZE;
-
-#ifdef DEBUG_MODE
-            auto start = std::chrono::high_resolution_clock::now();
-#endif
-
-            auto data = std::make_shared<ChunkData>(id, this);
-            m_worldGen->Generate(data.get(), chunkPos);
-
-            m_chunkData[id] = data;
-
-#ifdef DEBUG_MODE
-            auto end = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-            m_chunkDataGenerated++;
-            m_avgChunkDataGenTime = m_avgChunkDataGenTime + (duration.count() - m_avgChunkDataGenTime) / std::min(m_chunkDataGenerated, 1);
-#endif
-
-            return data;
+            return nullptr;
         }
 
-        return nullptr;
+        // Generate new chunk data
+        auto chunkPos = id * CHUNK_SIZE;
+
+        #ifdef DEBUG_MODE
+        auto start = std::chrono::high_resolution_clock::now();
+        #endif
+
+        auto data = std::make_shared<ChunkData>(id, this);
+        m_worldGen->Generate(data.get(), chunkPos);
+
+        #ifdef DEBUG_MODE
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        m_chunkDataGenerated++;
+        m_avgChunkDataGenTime = m_avgChunkDataGenTime + (duration.count() - m_avgChunkDataGenTime) / std::min(m_chunkDataGenerated, 1);
+        #endif
+
+        {
+            std::unique_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
+            m_chunkData[id] = data;
+        }
+
+        return data;
     }
 
     void ChunkManager::ChunkThread()
@@ -386,44 +396,71 @@ namespace WillowVox
 
                 // Delete chunk renderers out of range
                 {
-                    std::lock_guard<std::mutex> chunkRenderLock(m_chunkRendererMutex);
-                    for (auto it = m_chunkRenderers.begin(); it != m_chunkRenderers.end();)
+                    // Get chunk renderers out of range
+                    std::vector<std::shared_ptr<ChunkRenderer>> chunksToDelete;
+
                     {
-                        glm::ivec3 id = it->first;
-                        if (std::abs(id.x - chunkX) > m_renderDistance ||
-                            std::abs(id.y - chunkY) > m_renderHeight ||
-                            std::abs(id.z - chunkZ) > m_renderDistance)
+                        std::shared_lock<std::shared_mutex> chunkRenderLock(m_chunkRendererMutex);
+                        for (auto& [id, chunk] : m_chunkRenderers)
                         {
+                            glm::ivec3 id = chunk->m_chunkId;
+                            if (std::abs(id.x - chunkX) > m_renderDistance ||
+                                std::abs(id.y - chunkY) > m_renderHeight ||
+                                std::abs(id.z - chunkZ) > m_renderDistance)
                             {
-                                std::lock_guard<std::mutex> deleteLock(m_chunkRendererDeletionMutex);
-                                m_chunkRendererDeletionQueue.push(it->second);
+                                chunksToDelete.push_back(chunk);
                             }
-                            it = m_chunkRenderers.erase(it);
                         }
-                        else
-                            ++it;
+                    }
+
+                    // Add chunks to deletion queue
+                    {
+                        std::unique_lock<std::shared_mutex> chunkRenderLock(m_chunkRendererMutex);
+                        for (auto& chunk : chunksToDelete)
+                        {
+                            m_chunkRenderers.erase(chunk->m_chunkId);
+                        }
+                    }
+                    {
+                        std::lock_guard<std::mutex> deleteLock(m_chunkRendererDeletionMutex);
+                        for (auto& chunk : chunksToDelete)
+                        {
+                            m_chunkRendererDeletionQueue.push(chunk);
+                        }
                     }
                 }
 
                 // Delete chunk data out of range
                 {
-                    std::lock_guard<std::mutex> chunkDataLock(m_chunkDataMutex);
-                    for (auto it = m_chunkData.begin(); it != m_chunkData.end();)
+                    // Get chunk data out of range
+                    std::vector<glm::ivec3> chunkDataToDelete;
+
                     {
-                        glm::ivec3 id = it->first;
-                        std::lock_guard<std::mutex> chunkRenderLock(m_chunkRendererMutex);
-                        if (m_chunkRenderers.find(id) == m_chunkRenderers.end() &&
-                            m_chunkRenderers.find({ id.x + 1, id.y, id.z }) == m_chunkRenderers.end() &&
-                            m_chunkRenderers.find({ id.x - 1, id.y, id.z }) == m_chunkRenderers.end() &&
-                            m_chunkRenderers.find({ id.x, id.y + 1, id.z }) == m_chunkRenderers.end() &&
-                            m_chunkRenderers.find({ id.x, id.y - 1, id.z }) == m_chunkRenderers.end() &&
-                            m_chunkRenderers.find({ id.x, id.y, id.z + 1 }) == m_chunkRenderers.end() &&
-                            m_chunkRenderers.find({ id.x, id.y, id.z - 1 }) == m_chunkRenderers.end())
+                        std::shared_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
+                        std::shared_lock<std::shared_mutex> chunkRenderLock(m_chunkRendererMutex);
+                        for (auto& [id, data] : m_chunkData)
                         {
-                            it = m_chunkData.erase(it);
+                            glm::ivec3 id = data->id;
+                            if (m_chunkRenderers.find(id) == m_chunkRenderers.end() &&
+                                m_chunkRenderers.find({ id.x + 1, id.y, id.z }) == m_chunkRenderers.end() &&
+                                m_chunkRenderers.find({ id.x - 1, id.y, id.z }) == m_chunkRenderers.end() &&
+                                m_chunkRenderers.find({ id.x, id.y + 1, id.z }) == m_chunkRenderers.end() &&
+                                m_chunkRenderers.find({ id.x, id.y - 1, id.z }) == m_chunkRenderers.end() &&
+                                m_chunkRenderers.find({ id.x, id.y, id.z + 1 }) == m_chunkRenderers.end() &&
+                                m_chunkRenderers.find({ id.x, id.y, id.z - 1 }) == m_chunkRenderers.end())
+                            {
+                                chunkDataToDelete.push_back(id);
+                            }
                         }
-                        else
-                            ++it;
+                    }
+
+                    // Delete chunk data out of range
+                    {
+                        std::unique_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
+                        for (auto& id : chunkDataToDelete)
+                        {
+                            m_chunkData.erase(id);
+                        }
                     }
                 }
             }
@@ -439,7 +476,7 @@ namespace WillowVox
                     continue;
 
                 {
-                    std::lock_guard<std::mutex> chunkRendererLock(m_chunkRendererMutex);
+                    std::shared_lock<std::shared_mutex> chunkRendererLock(m_chunkRendererMutex);
                     if (m_chunkRenderers.find(id) != m_chunkRenderers.end())
                         continue;
                 }
@@ -463,8 +500,10 @@ namespace WillowVox
                 chunk->GenerateMesh();
 
                 // Add chunk to map
-                std::lock_guard<std::mutex> lock(m_chunkRendererMutex);
-                m_chunkRenderers[id] = chunk;
+                {
+                    std::unique_lock<std::shared_mutex> lock(m_chunkRendererMutex);
+                    m_chunkRenderers[id] = chunk;
+                }
             }
             else
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
