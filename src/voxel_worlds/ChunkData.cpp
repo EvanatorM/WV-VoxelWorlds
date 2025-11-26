@@ -27,7 +27,7 @@ namespace WillowVox
                     for (int x = -1; x <= 1; x++)
                     {
                         if (x == 0 && y == 0 && z == 0) continue;
-                        surroundingData[index++] = chunkManager->GetChunkData(id + glm::ivec3(x, y, z)).get();
+                        surroundingData[index++] = chunkManager->GetChunkData(id + glm::ivec3(x, y, z));
                     }
                 }
             }

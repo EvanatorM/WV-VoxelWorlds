@@ -77,14 +77,14 @@ namespace WillowVox
         }, highPriority);
     }
 
-    inline void StartLightingRecalculationJob(ThreadPool& pool, std::shared_ptr<ChunkData> chunkData, std::shared_ptr<ChunkRenderer> renderer, bool highPriority = false)
+    inline void StartLightingRecalculationJob(ThreadPool& pool, ChunkManager* chunkManager, std::shared_ptr<ChunkData> chunkData, std::shared_ptr<ChunkRenderer> renderer, bool highPriority = false)
     {
         if (!chunkData)
             return;
 
         std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
         std::weak_ptr<ChunkRenderer> weakChunkRendererPtr = renderer;
-        pool.QueueJob([weakChunkDataPtr, weakChunkRendererPtr] {
+        pool.QueueJob([weakChunkDataPtr, weakChunkRendererPtr, &pool, chunkManager] {
             if (auto chunkDataPtr = weakChunkDataPtr.lock())
             {
                 chunkDataPtr->CalculateLighting();
@@ -93,6 +93,30 @@ namespace WillowVox
                     std::lock_guard<std::mutex> lock(chunkRendererPtr->m_generationMutex);
                     chunkRendererPtr->GenerateMesh();
                 }
+
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    for (int dz = -1; dz <= 1; dz++)
+                    {
+                        if (dx == 0 && dy == 0 && dz == 0) continue;
+
+                        auto neighborChunkId = chunkDataPtr->id + glm::ivec3(dx, dy, dz);
+                        auto neighborChunkData = chunkManager->GetChunkData(neighborChunkId);
+                        auto neighborChunkRenderer = chunkManager->GetChunkRenderer(neighborChunkId);
+
+                        if (neighborChunkData)
+                            neighborChunkData->CalculateLighting();
+
+                        if (neighborChunkRenderer)
+                        {
+                            std::lock_guard<std::mutex> lock(neighborChunkRenderer->m_generationMutex);
+                            neighborChunkRenderer->GenerateMesh();
+                        }
+                    }
+                }
+            }
             }
         }, highPriority);
     }
@@ -147,23 +171,7 @@ namespace WillowVox
             StartBatchChunkMeshJob(m_chunkThreadPool, chunksToRemesh, true);
 
             // Start recalculate lighting job for current and surrounding chunks
-            StartLightingRecalculationJob(m_chunkThreadPool, chunk, GetChunkRenderer(chunkId), true);
-            
-            for (int dx = -1; dx <= 1; dx++)
-            {
-                for (int dy = -1; dy <= 1; dy++)
-                {
-                    for (int dz = -1; dz <= 1; dz++)
-                    {
-                        if (dx == 0 && dy == 0 && dz == 0) continue;
-
-                        auto neighborChunkId = chunkId + glm::ivec3(dx, dy, dz);
-                        auto neighborChunkData = GetChunkData(neighborChunkId);
-                        auto neighborChunkRenderer = GetChunkRenderer(neighborChunkId);
-                        StartLightingRecalculationJob(m_chunkThreadPool, neighborChunkData, neighborChunkRenderer, true);
-                    }
-                }
-            }
+            StartLightingRecalculationJob(m_chunkThreadPool, this, chunk, GetChunkRenderer(chunkId));
         }
     }
 

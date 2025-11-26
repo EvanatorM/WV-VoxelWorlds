@@ -84,7 +84,7 @@ namespace WillowVox
         BlockRegistry* blockRegistry;
 
         ChunkManager* chunkManager;
-        ChunkData* surroundingData[26];
+        std::shared_ptr<ChunkData> surroundingData[26];
         bool surroundingDataCached = false;
     };
 }
