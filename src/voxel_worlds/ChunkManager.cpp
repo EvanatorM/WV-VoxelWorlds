@@ -94,29 +94,29 @@ namespace WillowVox
                     chunkRendererPtr->GenerateMesh();
                 }
 
-            for (int dx = -1; dx <= 1; dx++)
-            {
-                for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
                 {
-                    for (int dz = -1; dz <= 1; dz++)
+                    for (int dy = -1; dy <= 1; dy++)
                     {
-                        if (dx == 0 && dy == 0 && dz == 0) continue;
-
-                        auto neighborChunkId = chunkDataPtr->id + glm::ivec3(dx, dy, dz);
-                        auto neighborChunkData = chunkManager->GetChunkData(neighborChunkId);
-                        auto neighborChunkRenderer = chunkManager->GetChunkRenderer(neighborChunkId);
-
-                        if (neighborChunkData)
-                            neighborChunkData->CalculateLighting();
-
-                        if (neighborChunkRenderer)
+                        for (int dz = -1; dz <= 1; dz++)
                         {
-                            std::lock_guard<std::mutex> lock(neighborChunkRenderer->m_generationMutex);
-                            neighborChunkRenderer->GenerateMesh();
+                            if (dx == 0 && dy == 0 && dz == 0) continue;
+
+                            auto neighborChunkId = chunkDataPtr->id + glm::ivec3(dx, dy, dz);
+                            auto neighborChunkData = chunkManager->GetChunkData(neighborChunkId);
+                            auto neighborChunkRenderer = chunkManager->GetChunkRenderer(neighborChunkId);
+
+                            if (neighborChunkData)
+                                neighborChunkData->CalculateLighting();
+
+                            if (neighborChunkRenderer)
+                            {
+                                std::lock_guard<std::mutex> lock(neighborChunkRenderer->m_generationMutex);
+                                neighborChunkRenderer->GenerateMesh();
+                            }
                         }
                     }
                 }
-            }
             }
         }, highPriority);
     }
