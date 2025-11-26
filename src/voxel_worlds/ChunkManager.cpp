@@ -148,7 +148,7 @@ namespace WillowVox
 
             // Start recalculate lighting job for current and surrounding chunks
             StartLightingRecalculationJob(m_chunkThreadPool, chunk, GetChunkRenderer(chunkId), true);
-
+            
             for (int dx = -1; dx <= 1; dx++)
             {
                 for (int dy = -1; dy <= 1; dy++)
@@ -156,7 +156,7 @@ namespace WillowVox
                     for (int dz = -1; dz <= 1; dz++)
                     {
                         if (dx == 0 && dy == 0 && dz == 0) continue;
-                        
+
                         auto neighborChunkId = chunkId + glm::ivec3(dx, dy, dz);
                         auto neighborChunkData = GetChunkData(neighborChunkId);
                         auto neighborChunkRenderer = GetChunkRenderer(neighborChunkId);

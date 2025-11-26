@@ -65,9 +65,9 @@ namespace WillowVox
         #ifdef DEBUG_MODE
         auto start = std::chrono::high_resolution_clock::now();
         #endif
-        
-        m_vertices.clear();
-        m_indices.clear();
+
+        std::vector<ChunkVertex> vertices;
+        std::vector<int> indices;
         int vertexCount = 0;
 
         auto& blockRegistry = BlockRegistry::GetInstance();
@@ -101,12 +101,12 @@ namespace WillowVox
                         if (south)
                         {
                             // South Face
-                            m_vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 0, y + 1, z + 1 }, { 0, 0, 1 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel });
-                            m_vertices.push_back({ { x + 1, y + 1, z + 1 }, { 0, 0, 1 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 0, 0, 1 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { 0, 0, 1 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel });
 
-                            AddIndices(m_indices, vertexCount);
+                            AddIndices(indices, vertexCount);
                         }
                     }
 
@@ -125,12 +125,12 @@ namespace WillowVox
                         if (north)
                         {
                             // North Face
-                            m_vertices.push_back({ { x + 1, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 0, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 1, y + 1, z + 0 }, { 0, 0, -1 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel });
-                            m_vertices.push_back({ { x + 0, y + 1, z + 0 }, { 0, 0, -1 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { 0, 0, -1 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 0, 0, -1 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel });
 
-                            AddIndices(m_indices, vertexCount);
+                            AddIndices(indices, vertexCount);
                         }
                     }
                     // East Face
@@ -148,12 +148,12 @@ namespace WillowVox
                         if (east)
                         {
                             // East Face
-                            m_vertices.push_back({ { x + 1, y + 0, z + 1 }, { -1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 1, y + 0, z + 0 }, { -1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 1, y + 1, z + 1 }, { -1, 0, 0 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel });
-                            m_vertices.push_back({ { x + 1, y + 1, z + 0 }, { -1, 0, 0 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { -1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { -1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { -1, 0, 0 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { -1, 0, 0 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel });
 
-                            AddIndices(m_indices, vertexCount);
+                            AddIndices(indices, vertexCount);
                         }
                     }
                     // West Face
@@ -171,12 +171,12 @@ namespace WillowVox
                         if (west)
                         {
                             // West Face
-                            m_vertices.push_back({ { x + 0, y + 0, z + 0 }, { 1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 0, y + 0, z + 1 }, { 1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 0, y + 1, z + 0 }, { 1, 0, 0 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel });
-                            m_vertices.push_back({ { x + 0, y + 1, z + 1 }, { 1, 0, 0 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 1, 0, 0 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 1, 0, 0 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel });
 
-                            AddIndices(m_indices, vertexCount);
+                            AddIndices(indices, vertexCount);
                         }
                     }
                     // Up Face
@@ -194,12 +194,12 @@ namespace WillowVox
                         if (up)
                         {
                             // Up Face
-                            m_vertices.push_back({ { x + 0, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMinX, block.topTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 1, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMaxX, block.topTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 0, y + 1, z + 0 }, { 0, 1, 0 }, { block.topTexMinX, block.topTexMaxY }, lightLevel });
-                            m_vertices.push_back({ { x + 1, y + 1, z + 0 }, { 0, 1, 0 }, { block.topTexMaxX, block.topTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMinX, block.topTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMaxX, block.topTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 0, 1, 0 }, { block.topTexMinX, block.topTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { 0, 1, 0 }, { block.topTexMaxX, block.topTexMaxY }, lightLevel });
 
-                            AddIndices(m_indices, vertexCount);
+                            AddIndices(indices, vertexCount);
                         }
                     }
                     // Down Face
@@ -217,12 +217,12 @@ namespace WillowVox
                         if (down)
                         {
                             // Down Face
-                            m_vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMinX, block.bottomTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMaxX, block.bottomTexMinY }, lightLevel });
-                            m_vertices.push_back({ { x + 1, y + 0, z + 0 }, { 0, -1, 0 }, { block.bottomTexMinX, block.bottomTexMaxY }, lightLevel });
-                            m_vertices.push_back({ { x + 0, y + 0, z + 0 }, { 0, -1, 0 }, { block.bottomTexMaxX, block.bottomTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMinX, block.bottomTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMaxX, block.bottomTexMinY }, lightLevel });
+                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { 0, -1, 0 }, { block.bottomTexMinX, block.bottomTexMaxY }, lightLevel });
+                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 0, -1, 0 }, { block.bottomTexMaxX, block.bottomTexMaxY }, lightLevel });
 
-                            AddIndices(m_indices, vertexCount);
+                            AddIndices(indices, vertexCount);
                         }
                     }
                 }
@@ -231,6 +231,9 @@ namespace WillowVox
 
         if (!batch)
             m_dirty = true;
+
+        std::swap(m_vertices, vertices);
+        std::swap(m_indices, indices);
 
         #ifdef DEBUG_MODE
         auto end = std::chrono::high_resolution_clock::now();
