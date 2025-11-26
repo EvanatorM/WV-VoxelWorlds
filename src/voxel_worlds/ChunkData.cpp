@@ -11,10 +11,7 @@ namespace WillowVox
         if (currentVersion == 0)
             currentVersion = m_version;
         if (currentVersion != m_version)
-        {
-            Logger::Log("Lighting calculation aborted for chunk (%d, %d, %d) due to version change.", id.x, id.y, id.z);
             return; // Abort lighting calculation if version has changed
-        }
 
         struct LightEmission
         {
@@ -79,10 +76,7 @@ namespace WillowVox
         while (!emissions.empty())
         {
             if (currentVersion != m_version)
-            {
-                Logger::Log("Lighting calculation aborted for chunk (%d, %d, %d) due to version change.", id.x, id.y, id.z);
                 return; // Abort lighting calculation if version has changed
-            }
 
             auto emission = emissions.front();
             emissions.pop();
@@ -129,7 +123,5 @@ namespace WillowVox
                 }
             }
         }
-
-        Logger::Log("Finished lighting calculation for chunk (%d, %d, %d).", id.x, id.y, id.z);
     }
 }
