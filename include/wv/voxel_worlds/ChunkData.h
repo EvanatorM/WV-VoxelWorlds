@@ -12,11 +12,9 @@ namespace WillowVox
 
     struct ChunkData
     {
-        ChunkData(const glm::ivec3& id, ChunkManager* manager)
-            : id(id), chunkManager(manager)
+        ChunkData(const glm::ivec3& id)
+            : id(id)
         {
-            blockRegistry = &BlockRegistry::GetInstance();
-
             Clear();
         }
 
@@ -41,23 +39,25 @@ namespace WillowVox
         inline void Set(int x, int y, int z, BlockId value) noexcept
         {
             assert(InBounds(x, y, z));
-
-            int i = Index(x, y, z);
-            BlockId oldValue = voxels[i];
-            if (blockRegistry->GetBlock(oldValue).lightEmitter)
-                lightEmitters.erase(std::remove(lightEmitters.begin(), lightEmitters.end(), glm::ivec3(x, y, z)), lightEmitters.end());
-
             voxels[Index(x, y, z)] = value;
-            if (blockRegistry->GetBlock(value).lightEmitter)
-                lightEmitters.push_back({ x, y, z});
+        }
+
+        inline void ClearLight() noexcept
+        {
+            for (auto& v : lightLevels)
+                v = 0;
+        }
+
+        inline void ClearBlocks() noexcept
+        {
+            for (auto& v : voxels)
+                v = 0;
         }
 
         inline void Clear() noexcept
         {
-            for (auto& v : voxels)
-                v = 0;
-            for (auto& v : lightLevels)
-                v = 0;
+            ClearBlocks();
+            ClearLight();
         }
 
         inline int GetLightLevel(int x, int y, int z) const noexcept
@@ -72,21 +72,9 @@ namespace WillowVox
             lightLevels[Index(x, y, z)] = value;
         }
 
-        void CalculateLighting(uint32_t currentVersion = 0);
-
         BlockId voxels[CHUNK_VOLUME];
         int lightLevels[CHUNK_VOLUME];
-        std::vector<glm::ivec3> lightEmitters;
 
         glm::ivec3 id;
-
-        std::atomic<uint32_t> m_version = 0;
-
-    private:
-        BlockRegistry* blockRegistry;
-
-        ChunkManager* chunkManager;
-        std::shared_ptr<ChunkData> surroundingData[26];
-        bool surroundingDataCached = false;
     };
 }

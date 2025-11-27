@@ -10,6 +10,7 @@ add_library(WVVoxelWorlds STATIC
     src/voxel_worlds/ChunkData.cpp
     src/voxel_worlds/ChunkManager.cpp
     src/voxel_worlds/ChunkRenderer.cpp
+    src/voxel_worlds/VoxelLighting.cpp
 )
 
 target_include_directories(WVVoxelWorlds PUBLIC 

@@ -1,5 +1,6 @@
 #include <wv/voxel_worlds/ChunkManager.h>
 #include <wv/voxel_worlds/WorldGen.h>
+#include <wv/voxel_worlds/VoxelLighting.h>
 #include <algorithm>
 #include <chrono>
 
@@ -78,25 +79,56 @@ namespace WillowVox
         }, highPriority);
     }
 
-    inline void StartLightingRecalculationJob(ThreadPool& pool, std::shared_ptr<ChunkData> chunkData, std::shared_ptr<ChunkRenderer> renderer, bool highPriority = false)
+    inline void StartLightingRecalculationJob(ThreadPool& pool, ChunkManager* chunkManager, std::shared_ptr<ChunkData> chunkData, std::shared_ptr<ChunkRenderer> renderer, bool highPriority = false)
     {
         if (!chunkData)
             return;
 
-        uint32_t currentVersion = ++chunkData->m_version;
         std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
         std::weak_ptr<ChunkRenderer> weakChunkRendererPtr = renderer;
-        pool.QueueJob([weakChunkDataPtr, weakChunkRendererPtr, currentVersion] {
+        pool.QueueJob([chunkManager, weakChunkDataPtr, weakChunkRendererPtr] {
             if (auto chunkDataPtr = weakChunkDataPtr.lock())
             {
                 {
-                    chunkDataPtr->CalculateLighting(currentVersion);
+                    WillowVox::VoxelLighting::CalculateFullLighting(chunkManager, chunkDataPtr.get());
                 }
                 if (auto chunkRendererPtr = weakChunkRendererPtr.lock())
                 {
                     uint32_t currentVersion = ++chunkRendererPtr->m_version;
                     std::lock_guard<std::mutex> lock(chunkRendererPtr->m_generationMutex);
                     chunkRendererPtr->GenerateMesh(currentVersion);
+                }
+            }
+        }, highPriority);
+    }
+
+    inline void StartLightAddJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, int lightLevel, bool highPriority = false)
+    {
+        if (!chunkData)
+            return;
+
+        std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
+        pool.QueueJob([&chunkManager, weakChunkDataPtr, x, y, z, lightLevel] {
+            if (auto chunkDataPtr = weakChunkDataPtr.lock())
+            {
+                auto chunksToRemesh = WillowVox::VoxelLighting::AddLightEmitter(&chunkManager, chunkDataPtr.get(), x, y, z, lightLevel);
+
+                // Remesh affected chunks
+                std::vector<glm::ivec3> uniqueChunkIds;
+                for (auto& chunkId : chunksToRemesh)
+                {
+                    if (std::find(uniqueChunkIds.begin(), uniqueChunkIds.end(), chunkId) == uniqueChunkIds.end())
+                        uniqueChunkIds.push_back(chunkId);
+                }
+                for (auto& chunkId : uniqueChunkIds)
+                {
+                    auto renderer = chunkManager.GetChunkRenderer(chunkId);
+                    if (renderer)
+                    {
+                        uint32_t currentVersion = ++renderer->m_version;
+                        std::lock_guard<std::mutex> lock(renderer->m_generationMutex);
+                        renderer->GenerateMesh(currentVersion);
+                    }
                 }
             }
         }, highPriority);
@@ -111,6 +143,9 @@ namespace WillowVox
         if (chunk && chunk->InBounds(localPos.x, localPos.y, localPos.z))
         {
             chunk->Set(localPos.x, localPos.y, localPos.z, blockId);
+
+            static BlockRegistry& blockRegistry = BlockRegistry::GetInstance();
+            auto& block = blockRegistry.GetBlock(blockId);
 
             // Get vector of chunks to remesh
             std::vector<std::shared_ptr<ChunkRenderer>> chunksToRemesh;
@@ -151,8 +186,14 @@ namespace WillowVox
             // Start remesh job
             StartBatchChunkMeshJob(m_chunkThreadPool, chunksToRemesh, true);
 
+            // Handle lighting updates
+            if (block.lightEmitter)
+            {
+                StartLightAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, block.lightLevel, true);
+            }
+
             // Start recalculate lighting job for current and surrounding chunks
-            StartLightingRecalculationJob(m_chunkThreadPool, chunk, GetChunkRenderer(chunkId));
+            /*StartLightingRecalculationJob(m_chunkThreadPool, this, chunk, GetChunkRenderer(chunkId));
 
             for (int dx = -1; dx <= 1; dx++)
             {
@@ -165,10 +206,10 @@ namespace WillowVox
                         auto neighborChunkId = chunkId + glm::ivec3(dx, dy, dz);
                         auto neighborChunkData = GetChunkData(neighborChunkId);
                         auto neighborChunkRenderer = GetChunkRenderer(neighborChunkId);
-                        StartLightingRecalculationJob(m_chunkThreadPool, neighborChunkData, neighborChunkRenderer);
+                        StartLightingRecalculationJob(m_chunkThreadPool, this, neighborChunkData, neighborChunkRenderer);
                     }
                 }
-            }
+            }*/
         }
     }
 
@@ -275,7 +316,7 @@ namespace WillowVox
         auto start = std::chrono::high_resolution_clock::now();
         #endif
 
-        auto data = std::make_shared<ChunkData>(id, this);
+        auto data = std::make_shared<ChunkData>(id);
         m_worldGen->Generate(data.get(), chunkPos);
 
         #ifdef DEBUG_MODE
