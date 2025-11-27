@@ -1,6 +1,7 @@
 #pragma once
 
 #include <wv/wvpch.h>
+#include <unordered_set>
 
 namespace WillowVox
 {
@@ -14,11 +15,11 @@ namespace WillowVox
         void CalculateFullLighting(ChunkManager* chunkManager, ChunkData* chunkData);
 
         // Add a light emitter at the given local chunk position with the given light level
-        // Returns a vector of chunk ids that need to be remeshed
-        std::vector<glm::ivec3> AddLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z, int lightLevel);
+        // Returns a set of chunk ids that need to be remeshed
+        std::unordered_set<glm::ivec3> AddLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z, int lightLevel);
 
         // Remove a light emitter at the given local chunk position
-        // Returns a vector of chunk ids that need to be remeshed
-        std::vector<glm::ivec3> RemoveLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z);
+        // Returns a set of chunk ids that need to be remeshed
+        std::unordered_set<glm::ivec3> RemoveLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z);
     }
 }

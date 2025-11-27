@@ -114,13 +114,7 @@ namespace WillowVox
                 auto chunksToRemesh = WillowVox::VoxelLighting::AddLightEmitter(&chunkManager, chunkDataPtr.get(), x, y, z, lightLevel);
 
                 // Remesh affected chunks
-                std::vector<glm::ivec3> uniqueChunkIds;
                 for (auto& chunkId : chunksToRemesh)
-                {
-                    if (std::find(uniqueChunkIds.begin(), uniqueChunkIds.end(), chunkId) == uniqueChunkIds.end())
-                        uniqueChunkIds.push_back(chunkId);
-                }
-                for (auto& chunkId : uniqueChunkIds)
                 {
                     auto renderer = chunkManager.GetChunkRenderer(chunkId);
                     if (renderer)

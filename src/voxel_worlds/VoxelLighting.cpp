@@ -22,11 +22,11 @@ namespace WillowVox::VoxelLighting
         chunkData->ClearLight();
     }
 
-    std::vector<glm::ivec3> AddLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z, int lightLevel)
+    std::unordered_set<glm::ivec3> AddLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z, int lightLevel)
     {
         // Initialize remesh vector
-        std::vector<glm::ivec3> chunksToRemesh;
-        chunksToRemesh.push_back(chunkData->id);
+        std::unordered_set<glm::ivec3> chunksToRemesh;
+        chunksToRemesh.insert(chunkData->id);
 
         // Initialize BFS
         std::queue<LightNode> lightQueue;
@@ -59,7 +59,7 @@ namespace WillowVox::VoxelLighting
                 if (nx < 0)
                 {
                     targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0)).get();
-                    chunksToRemesh.push_back(currentChunk->id + glm::ivec3(-1, 0, 0));
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(-1, 0, 0));
                     nx += CHUNK_SIZE;
                 }
                 if (targetChunk)
@@ -77,6 +77,9 @@ namespace WillowVox::VoxelLighting
                     }
                 }
             }
+
+            // ...
+
             // Positive X
             {
                 int nx = x + 1;
@@ -86,7 +89,7 @@ namespace WillowVox::VoxelLighting
                 if (nx >= CHUNK_SIZE)
                 {
                     targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0)).get();
-                    chunksToRemesh.push_back(currentChunk->id + glm::ivec3(1, 0, 0));
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(1, 0, 0));
                     nx -= CHUNK_SIZE;
                 }
                 if (targetChunk)
@@ -113,7 +116,7 @@ namespace WillowVox::VoxelLighting
                 if (nz < 0)
                 {
                     targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1)).get();
-                    chunksToRemesh.push_back(currentChunk->id + glm::ivec3(0, 0, -1));
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, -1));
                     nz += CHUNK_SIZE;
                 }
                 if (targetChunk)
@@ -140,7 +143,7 @@ namespace WillowVox::VoxelLighting
                 if (nz >= CHUNK_SIZE)
                 {
                     targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1)).get();
-                    chunksToRemesh.push_back(currentChunk->id + glm::ivec3(0, 0, 1));
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, 1));
                     nz -= CHUNK_SIZE;
                 }
                 if (targetChunk)
@@ -167,7 +170,7 @@ namespace WillowVox::VoxelLighting
                 if (ny < 0)
                 {
                     targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0)).get();
-                    chunksToRemesh.push_back(currentChunk->id + glm::ivec3(0, -1, 0));
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, -1, 0));
                     ny += CHUNK_SIZE;
                 }
                 if (targetChunk)
@@ -194,7 +197,7 @@ namespace WillowVox::VoxelLighting
                 if (ny >= CHUNK_SIZE)
                 {
                     targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0)).get();
-                    chunksToRemesh.push_back(currentChunk->id + glm::ivec3(0, 1, 0));
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 1, 0));
                     ny -= CHUNK_SIZE;
                 }
                 if (targetChunk)
@@ -217,7 +220,7 @@ namespace WillowVox::VoxelLighting
         return chunksToRemesh;
     }
 
-    std::vector<glm::ivec3> RemoveLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z)
+    std::unordered_set<glm::ivec3> RemoveLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z)
     {
         return {};
     }
