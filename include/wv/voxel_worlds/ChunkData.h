@@ -8,8 +8,6 @@
 
 namespace WillowVox
 {
-    class ChunkManager;
-
     struct ChunkData
     {
         ChunkData(const glm::ivec3& id)
