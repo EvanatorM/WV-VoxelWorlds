@@ -21,5 +21,7 @@ namespace WillowVox
         // Remove a light emitter at the given local chunk position
         // Returns a set of chunk ids that need to be remeshed
         std::unordered_set<glm::ivec3> RemoveLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z);
+
+        extern std::mutex lightingMutex;
     }
 }

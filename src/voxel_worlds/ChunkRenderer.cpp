@@ -65,8 +65,8 @@ namespace WillowVox
     {
         if (currentVersion == 0)
             currentVersion = m_version;
-        //if (currentVersion != m_version)
-        //    return; // Abort lighting calculation if version has changed
+        if (currentVersion != m_version)
+            return; // Abort lighting calculation if version has changed
 
         #ifdef DEBUG_MODE
         auto start = std::chrono::high_resolution_clock::now();
@@ -82,8 +82,8 @@ namespace WillowVox
         {
             for (int x = 0; x < CHUNK_SIZE; x++)
             {
-                //if (currentVersion != m_version)
-                //    return; // Abort mesh generation if version has changed
+                if (currentVersion != m_version)
+                    return; // Abort mesh generation if version has changed
 
                 for (int y = 0; y < CHUNK_SIZE; y++)
                 {
@@ -92,17 +92,6 @@ namespace WillowVox
                         continue;
 
                     auto& block = blockRegistry.GetBlock(id);
-
-                    int lightLevel;
-                    if (y + 1 >= CHUNK_SIZE)
-                    {
-                        if (m_upChunkData)
-                            lightLevel = m_upChunkData->GetLightLevel(x, 0, z);
-                        else
-                            lightLevel = 0;
-                    }
-                    else
-                        lightLevel = m_chunkData->GetLightLevel(x, y + 1, z);
 
                     // South Face
                     {
@@ -118,6 +107,17 @@ namespace WillowVox
                             south = m_chunkData->Get(x, y, z + 1) == 0;
                         if (south)
                         {
+                            int lightLevel;
+                            if (z + 1 >= CHUNK_SIZE)
+                            {
+                                if (m_southChunkData)
+                                    lightLevel = m_southChunkData->GetLightLevel(x, y, 0);
+                                else
+                                    lightLevel = 0;
+                            }
+                            else
+                                lightLevel = m_chunkData->GetLightLevel(x, y, z + 1);
+
                             // South Face
                             vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
                             vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
@@ -142,6 +142,17 @@ namespace WillowVox
                             north = m_chunkData->Get(x, y, z - 1) == 0;
                         if (north)
                         {
+                            int lightLevel;
+                            if (z < 1)
+                            {
+                                if (m_northChunkData)
+                                    lightLevel = m_northChunkData->GetLightLevel(x, y, CHUNK_SIZE - 1);
+                                else
+                                    lightLevel = 0;
+                            }
+                            else
+                                lightLevel = m_chunkData->GetLightLevel(x, y, z - 1);
+
                             // North Face
                             vertices.push_back({ { x + 1, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
                             vertices.push_back({ { x + 0, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
@@ -165,6 +176,17 @@ namespace WillowVox
                             east = m_chunkData->Get(x + 1, y, z) == 0;
                         if (east)
                         {
+                            int lightLevel;
+                            if (x + 1 >= CHUNK_SIZE)
+                            {
+                                if (m_eastChunkData)
+                                    lightLevel = m_eastChunkData->GetLightLevel(0, y, z);
+                                else
+                                    lightLevel = 0;
+                            }
+                            else
+                                lightLevel = m_chunkData->GetLightLevel(x + 1, y, z);
+
                             // East Face
                             vertices.push_back({ { x + 1, y + 0, z + 1 }, { -1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
                             vertices.push_back({ { x + 1, y + 0, z + 0 }, { -1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
@@ -188,6 +210,17 @@ namespace WillowVox
                             west = m_chunkData->Get(x - 1, y, z) == 0;
                         if (west)
                         {
+                            int lightLevel;
+                            if (x < 1)
+                            {
+                                if (m_westChunkData)
+                                    lightLevel = m_westChunkData->GetLightLevel(CHUNK_SIZE - 1, y, z);
+                                else
+                                    lightLevel = 0;
+                            }
+                            else
+                                lightLevel = m_chunkData->GetLightLevel(x - 1, y, z);
+
                             // West Face
                             vertices.push_back({ { x + 0, y + 0, z + 0 }, { 1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel });
                             vertices.push_back({ { x + 0, y + 0, z + 1 }, { 1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel });
@@ -211,6 +244,17 @@ namespace WillowVox
                             up = m_chunkData->Get(x, y + 1, z) == 0;
                         if (up)
                         {
+                            int lightLevel;
+                            if (y + 1 >= CHUNK_SIZE)
+                            {
+                                if (m_upChunkData)
+                                    lightLevel = m_upChunkData->GetLightLevel(x, 0, z);
+                                else
+                                    lightLevel = 0;
+                            }
+                            else
+                                lightLevel = m_chunkData->GetLightLevel(x, y + 1, z);
+
                             // Up Face
                             vertices.push_back({ { x + 0, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMinX, block.topTexMinY }, lightLevel });
                             vertices.push_back({ { x + 1, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMaxX, block.topTexMinY }, lightLevel });
@@ -234,6 +278,17 @@ namespace WillowVox
                             down = m_chunkData->Get(x, y - 1, z) == 0;
                         if (down)
                         {
+                            int lightLevel;
+                            if (y < 1)
+                            {
+                                if (m_downChunkData)
+                                    lightLevel = m_downChunkData->GetLightLevel(x, CHUNK_SIZE - 1, z);
+                                else
+                                    lightLevel = 0;
+                            }
+                            else
+                                lightLevel = m_chunkData->GetLightLevel(x, y - 1, z);
+
                             // Down Face
                             vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMinX, block.bottomTexMinY }, lightLevel });
                             vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMaxX, block.bottomTexMinY }, lightLevel });
@@ -247,14 +302,15 @@ namespace WillowVox
             }
         }
 
-        if (!batch)
-            m_dirty = true;
 
         {
             std::lock_guard<std::mutex> lock(m_meshDataMutex);
             std::swap(m_vertices, vertices);
             std::swap(m_indices, indices);
         }
+
+        if (!batch)
+            m_dirty = true;
 
         #ifdef DEBUG_MODE
         auto end = std::chrono::high_resolution_clock::now();
