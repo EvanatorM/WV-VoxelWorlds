@@ -449,4 +449,182 @@ namespace WillowVox::VoxelLighting
 
         return chunksToRemesh;
     }
+
+    std::unordered_set<glm::ivec3> AddLightBlocker(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z)
+    {
+        // Get light level
+        int lightLevel = chunkData->GetLightLevel(x, y, z);
+
+        // If light level > 0, remove light that is now being blocked by the new blocker
+        if (lightLevel > 0)
+        {
+            return RemoveLightEmitter(chunkManager, chunkData, x, y, z);
+        }
+        
+        return {};
+    }
+    
+    std::unordered_set<glm::ivec3> RemoveLightBlocker(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z)
+    {
+        // Get surrounding light levels and find the max
+        int maxLightLevel = 0;
+        ChunkData* maxLightChunk = chunkData;
+        int maxLightX, maxLightY, maxLightZ;
+
+        {
+            // Negative X
+            {
+                int nx = x - 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = chunkData;
+                if (nx < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(-1, 0, 0)).get();
+                    nx += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    if (neighborLightLevel > maxLightLevel)
+                    {
+                        maxLightLevel = neighborLightLevel;
+                        maxLightChunk = targetChunk;
+                        maxLightX = nx;
+                        maxLightY = ny;
+                        maxLightZ = nz;
+                    }
+                }
+            }
+            // Positive X
+            {
+                int nx = x + 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = chunkData;
+                if (nx >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(1, 0, 0)).get();
+                    nx -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    if (neighborLightLevel > maxLightLevel)
+                    {
+                        maxLightLevel = neighborLightLevel;
+                        maxLightChunk = targetChunk;
+                        maxLightX = nx;
+                        maxLightY = ny;
+                        maxLightZ = nz;
+                    }
+                }
+            }
+            // Negative Y
+            {
+                int nx = x;
+                int ny = y - 1;
+                int nz = z;
+                ChunkData* targetChunk = chunkData;
+                if (ny < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, -1, 0)).get();
+                    ny += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    if (neighborLightLevel > maxLightLevel)
+                    {
+                        maxLightLevel = neighborLightLevel;
+                        maxLightChunk = targetChunk;
+                        maxLightX = nx;
+                        maxLightY = ny;
+                        maxLightZ = nz;
+                    }
+                }
+            }
+            // Positive Y
+            {
+                int nx = x;
+                int ny = y + 1;
+                int nz = z;
+                ChunkData* targetChunk = chunkData;
+                if (ny >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 1, 0)).get();
+                    ny -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    if (neighborLightLevel > maxLightLevel)
+                    {
+                        maxLightLevel = neighborLightLevel;
+                        maxLightChunk = targetChunk;
+                        maxLightX = nx;
+                        maxLightY = ny;
+                        maxLightZ = nz;
+                    }
+                }
+            }
+            // Negative Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z - 1;
+                ChunkData* targetChunk = chunkData;
+                if (nz < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, -1)).get();
+                    nz += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    if (neighborLightLevel > maxLightLevel)
+                    {
+                        maxLightLevel = neighborLightLevel;
+                        maxLightChunk = targetChunk;
+                        maxLightX = nx;
+                        maxLightY = ny;
+                        maxLightZ = nz;
+                    }
+                }
+            }
+            // Positive Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z + 1;
+                ChunkData* targetChunk = chunkData;
+                if (nz >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, 1)).get();
+                    nz -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    if (neighborLightLevel > maxLightLevel)
+                    {
+                        maxLightLevel = neighborLightLevel;
+                        maxLightChunk = targetChunk;
+                        maxLightX = nx;
+                        maxLightY = ny;
+                        maxLightZ = nz;
+                    }
+                }
+            }
+        }
+
+        if (maxLightLevel == 0)
+        {
+            // No surrounding light, nothing to add
+            return {};
+        }
+
+        // Add light from the strongest neighbor
+        return AddLightEmitter(chunkManager, maxLightChunk, maxLightX, maxLightY, maxLightZ, maxLightLevel);
+    }
 }
