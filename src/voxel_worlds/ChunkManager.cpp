@@ -210,6 +210,60 @@ namespace WillowVox
         }, highPriority);
     }
 
+    inline void StartSkyLightBlockerAddJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, bool highPriority = false)
+    {
+        if (!chunkData)
+            return;
+
+        std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
+        pool.QueueJob([&chunkManager, weakChunkDataPtr, x, y, z] {
+            if (auto chunkDataPtr = weakChunkDataPtr.lock())
+            {
+                std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::skyLightingMutex);
+                auto chunksToRemesh = WillowVox::VoxelLighting::AddSkyLightBlocker(&chunkManager, chunkDataPtr.get(), x, y, z);
+
+                // Remesh affected chunks
+                for (auto& chunkId : chunksToRemesh)
+                {
+                    auto renderer = chunkManager.GetChunkRenderer(chunkId);
+                    if (renderer)
+                    {
+                        uint32_t currentVersion = ++renderer->m_version;
+                        std::lock_guard<std::mutex> lock(renderer->m_generationMutex);
+                        renderer->GenerateMesh(currentVersion);
+                    }
+                }
+            }
+        }, highPriority);
+    }
+
+    inline void StartSkyLightBlockerRemovalJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, bool highPriority = false)
+    {
+        if (!chunkData)
+            return;
+
+        std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
+        pool.QueueJob([&chunkManager, weakChunkDataPtr, x, y, z] {
+            if (auto chunkDataPtr = weakChunkDataPtr.lock())
+            {
+                std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::skyLightingMutex);
+                auto chunksToRemesh = WillowVox::VoxelLighting::RemoveSkyLightBlocker(&chunkManager, chunkDataPtr.get(), x, y, z);
+
+                // Remesh affected chunks
+                for (auto& chunkId : chunksToRemesh)
+                {
+                    auto renderer = chunkManager.GetChunkRenderer(chunkId);
+                    if (renderer)
+                    {
+                        uint32_t currentVersion = ++renderer->m_version;
+                        std::lock_guard<std::mutex> lock(renderer->m_generationMutex);
+                        renderer->GenerateMesh(currentVersion);
+                    }
+                }
+            }
+        }, highPriority);
+    }
+
     void ChunkManager::SetBlockId(float x, float y, float z, BlockId blockId)
     {
         auto chunkId = WorldToChunkId(x, y, z);
@@ -267,16 +321,26 @@ namespace WillowVox
             if (block.lightEmitter)
             {
                 StartLightAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, block.lightLevel, true);
+                StartSkyLightBlockerAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
             }
             else if (blockId == 0)
             {
                 if (blockRegistry.GetBlock(oldBlockId).lightEmitter)
+                {
                     StartLightRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
+                    StartSkyLightBlockerRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
+                }
                 else
+                {
                     StartLightBlockerRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
+                    StartSkyLightBlockerRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
+                }
             }
             else
+            {
                 StartLightBlockerAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
+                StartSkyLightBlockerAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
+            }
         }
     }
 
@@ -589,10 +653,7 @@ namespace WillowVox
                 // Create chunk data
                 auto data = GetOrGenerateChunkData(id);
                 std::unordered_set<glm::ivec3> chunksToRemesh;
-                {
-                    std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::skyLightingMutex);
-                    chunksToRemesh = WillowVox::VoxelLighting::CalculateFullLighting(this, m_chunkData[id].get());
-                }
+                chunksToRemesh = WillowVox::VoxelLighting::CalculateFullLighting(this, m_chunkData[id].get());
 
                 // Create chunk renderer
                 auto chunk = std::make_shared<ChunkRenderer>(m_chunkData[id], id);

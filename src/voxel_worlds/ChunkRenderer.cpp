@@ -66,8 +66,8 @@ namespace WillowVox
     {
         if (currentVersion == 0)
             currentVersion = m_version;
-        if (currentVersion != m_version)
-            return; // Abort lighting calculation if version has changed
+        //if (currentVersion != m_version)
+        //    return; // Abort lighting calculation if version has changed
 
         #ifdef DEBUG_MODE
         auto start = std::chrono::high_resolution_clock::now();
@@ -83,8 +83,8 @@ namespace WillowVox
         {
             for (int x = 0; x < CHUNK_SIZE; x++)
             {
-                if (currentVersion != m_version)
-                    return; // Abort mesh generation if version has changed
+                //if (currentVersion != m_version)
+                //    return; // Abort mesh generation if version has changed
 
                 for (int y = 0; y < CHUNK_SIZE; y++)
                 {

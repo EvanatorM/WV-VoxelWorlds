@@ -21,6 +21,18 @@ namespace WillowVox::VoxelLighting
         ChunkData* chunk;
     };
 
+    struct LightRemovalNode
+    {
+        LightRemovalNode(int x, int y, int z, ChunkData* chunk, int value)
+            : x(x), y(y), z(z), chunk(chunk), value(value)
+        {}
+        int x;
+        int y;
+        int z;
+        int value;
+        ChunkData* chunk;
+    };
+
     std::unordered_set<glm::ivec3> CalculateFullLighting(ChunkManager* chunkManager, ChunkData* chunkData)
     {
         chunkData->ClearLight();
@@ -30,30 +42,8 @@ namespace WillowVox::VoxelLighting
         return chunksToRemesh;
     }
 
-    std::unordered_set<glm::ivec3> CalculateSkyLighting(ChunkManager* chunkManager, ChunkData* chunkData)
+    inline void PropagateSkyLight(ChunkManager* chunkManager, std::queue<LightNode>& sunlightQueue, std::unordered_set<glm::ivec3>& chunksToRemesh)
     {
-        std::unordered_set<glm::ivec3> chunksToRemesh;
-        chunksToRemesh.insert(chunkData->id);
-        std::queue<LightNode> sunlightQueue;
-
-        if (chunkData->id.y >= -1)
-        {
-            for (int x = 0; x < CHUNK_SIZE; ++x)
-            {
-                for (int z = 0; z < CHUNK_SIZE; ++z)
-                {
-                    // Check if top block is empty
-                    if (chunkData->Get(x, CHUNK_SIZE - 1, z) == 0)
-                    {
-                        // Set sky light level to maximum and enqueue
-                        chunkData->SetSkyLightLevel(x, CHUNK_SIZE - 1, z, 15);
-                        sunlightQueue.emplace(x, CHUNK_SIZE - 1, z, chunkData);
-                    }
-                }
-            }
-        }
-
-        // Propagate sunlight
         while (!sunlightQueue.empty())
         {
             LightNode& node = sunlightQueue.front();
@@ -64,7 +54,10 @@ namespace WillowVox::VoxelLighting
             sunlightQueue.pop();
 
             int skyLightLevel = currentChunk->GetSkyLightLevel(x, y, z);
+            //Logger::Log("Skylight queue size: %d. Current light level: %d. X: %d, Y: %d, Z: %d", (int)sunlightQueue.size(), skyLightLevel, x, y, z);
 
+            if (skyLightLevel == 0)
+                continue;
 
             // Propagate
             // Negative Y
@@ -89,6 +82,33 @@ namespace WillowVox::VoxelLighting
                         {
                             // Set light level and enqueue
                             targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel);
+                            sunlightQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Positive Y
+            {
+                int ny = y + 1;
+                int nx = x;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 1, 0));
+                    ny -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
                             sunlightQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
@@ -203,6 +223,407 @@ namespace WillowVox::VoxelLighting
                 }
             }
         }
+    }
+
+    inline void GetHighestSkyLightNeighbor(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z, int& outLevel, ChunkData*& outChunk, int& outX, int& outY, int& outZ)
+    {
+        // Positive Y
+        {
+            int ny = y + 1;
+            int nx = x;
+            int nz = z;
+            ChunkData* targetChunk = chunkData;
+            if (ny >= CHUNK_SIZE)
+            {
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 1, 0)).get();
+                ny -= CHUNK_SIZE;
+            }
+            if (targetChunk)
+            {
+                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                if (neighborLightLevel > outLevel)
+                {
+                    outLevel = neighborLightLevel;
+                    outChunk = targetChunk;
+                    outX = nx;
+                    outY = ny;
+                    outZ = nz;
+                }
+            }
+        }
+        // Negative Y
+        {
+            int ny = y - 1;
+            int nx = x;
+            int nz = z;
+            ChunkData* targetChunk = chunkData;
+            if (ny < 0)
+            {
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, -1, 0)).get();
+                ny += CHUNK_SIZE;
+            }
+            if (targetChunk)
+            {
+                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                if (neighborLightLevel > outLevel)
+                {
+                    outLevel = neighborLightLevel;
+                    outChunk = targetChunk;
+                    outX = nx;
+                    outY = ny;
+                    outZ = nz;
+                }
+            }
+        }
+        // Negative X
+        {
+            int nx = x - 1;
+            int ny = y;
+            int nz = z;
+            ChunkData* targetChunk = chunkData;
+            if (nx < 0)
+            {
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(-1, 0, 0)).get();
+                nx += CHUNK_SIZE;
+            }
+            if (targetChunk)
+            {
+                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                if (neighborLightLevel > outLevel)
+                {
+                    outLevel = neighborLightLevel;
+                    outChunk = targetChunk;
+                    outX = nx;
+                    outY = ny;
+                    outZ = nz;
+                }
+            }
+        }
+        // Positive X
+        {
+            int nx = x + 1;
+            int ny = y;
+            int nz = z;
+            ChunkData* targetChunk = chunkData;
+            if (nx >= CHUNK_SIZE)
+            {
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(1, 0, 0)).get();
+                nx -= CHUNK_SIZE;
+            }
+            if (targetChunk)
+            {
+                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                if (neighborLightLevel > outLevel)
+                {
+                    outLevel = neighborLightLevel;
+                    outChunk = targetChunk;
+                    outX = nx;
+                    outY = ny;
+                    outZ = nz;
+                }
+            }
+        }
+        // Negative Z
+        {
+            int nx = x;
+            int ny = y;
+            int nz = z - 1;
+            ChunkData* targetChunk = chunkData;
+            if (nz < 0)
+            {
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, -1)).get();
+                nz += CHUNK_SIZE;
+            }
+            if (targetChunk)
+            {
+                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                if (neighborLightLevel > outLevel)
+                {
+                    outLevel = neighborLightLevel;
+                    outChunk = targetChunk;
+                    outX = nx;
+                    outY = ny;
+                    outZ = nz;
+                }
+            }
+        }
+        // Positive Z
+        {
+            int nx = x;
+            int ny = y;
+            int nz = z + 1;
+            ChunkData* targetChunk = chunkData;
+            if (nz >= CHUNK_SIZE)
+            {
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, 1)).get();
+                nz -= CHUNK_SIZE;
+            }
+            if (targetChunk)
+            {
+                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                if (neighborLightLevel > outLevel)
+                {
+                    outLevel = neighborLightLevel;
+                    outChunk = targetChunk;
+                    outX = nx;
+                    outY = ny;
+                    outZ = nz;
+                }
+            }
+        }
+    }
+
+    std::unordered_set<glm::ivec3> CalculateSkyLighting(ChunkManager* chunkManager, ChunkData* chunkData)
+    {
+        std::unordered_set<glm::ivec3> chunksToRemesh;
+        chunksToRemesh.insert(chunkData->id);
+        std::queue<LightNode> sunlightQueue;
+
+        if (chunkData->id.y >= -1)
+        {
+            for (int x = 0; x < CHUNK_SIZE; ++x)
+            {
+                for (int z = 0; z < CHUNK_SIZE; ++z)
+                {
+                    // Check if top block is empty
+                    if (chunkData->Get(x, CHUNK_SIZE - 1, z) == 0)
+                    {
+                        // Set sky light level to maximum and enqueue
+                        chunkData->SetSkyLightLevel(x, CHUNK_SIZE - 1, z, 15);
+                        sunlightQueue.emplace(x, CHUNK_SIZE - 1, z, chunkData);
+                    }
+                }
+            }
+        }
+
+        // Propagate sunlight
+        PropagateSkyLight(chunkManager, sunlightQueue, chunksToRemesh);
+
+        return chunksToRemesh;
+    }
+
+    std::unordered_set<glm::ivec3> AddSkyLightBlocker(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z)
+    {
+        // Initialize remesh vector
+        std::unordered_set<glm::ivec3> chunksToRemesh;
+        chunksToRemesh.insert(chunkData->id);
+
+        // Initialize BFS
+        std::queue<LightRemovalNode> lightRemovalQueue;
+        std::queue<LightNode> lightPropagationQueue;
+
+        // Set initial light level and enqueue
+        int lightLevel = chunkData->GetSkyLightLevel(x, y, z);
+        lightRemovalQueue.emplace(x, y, z, chunkData, lightLevel);
+
+        chunkData->SetSkyLightLevel(x, y, z, 0);
+
+        // BFS for light removal
+        while (!lightRemovalQueue.empty())
+        {
+            // Get node from queue
+            LightRemovalNode& node = lightRemovalQueue.front();
+            int x = node.x;
+            int y = node.y;
+            int z = node.z;
+            int lightLevel = node.value;
+            ChunkData* currentChunk = node.chunk;
+            lightRemovalQueue.pop();
+
+            // Propagate to neighbors
+            //      If their light level is not 0 and is less than the current node,
+            //      add them to the queue and set their light level to zero.
+            //      Else if it is >= current node, add it to light propagation queue.
+            
+            // Negative X
+            {
+                int nx = x - 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(-1, 0, 0));
+                    nx += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Positive X
+            {
+                int nx = x + 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(1, 0, 0));
+                    nx -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Negative Y
+            {
+                int nx = x;
+                int ny = y - 1;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, -1, 0));
+                    ny += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel <= lightLevel)
+                    {
+                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel > lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Positive Y
+            {
+                int nx = x;
+                int ny = y + 1;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 1, 0));
+                    ny -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Negative Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z - 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, -1));
+                    nz += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Positive Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z + 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, 1));
+                    nz -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+        }
+        
+        // Propagate re-added light emitters
+        PropagateSkyLight(chunkManager, lightPropagationQueue, chunksToRemesh);
+
+        return chunksToRemesh;
+    }
+
+    std::unordered_set<glm::ivec3> RemoveSkyLightBlocker(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z)
+    {
+        // Get highest sky light level from neighbors
+        int skyLightLevel = 0;
+        int skyLightX, skyLightY, skyLightZ;
+        ChunkData* skyLightChunk = chunkData;
+        GetHighestSkyLightNeighbor(chunkManager, chunkData, x, y, z, skyLightLevel, skyLightChunk, skyLightX, skyLightY, skyLightZ);
+
+        // If no neighbors have sky light, return
+        if (skyLightLevel == 0)
+            return {};
+
+        // Propagate sky light
+        std::unordered_set<glm::ivec3> chunksToRemesh;
+        chunksToRemesh.insert(chunkData->id);
+        std::queue<LightNode> sunlightQueue;
+
+        sunlightQueue.emplace(skyLightX, skyLightY, skyLightZ, skyLightChunk);
+        PropagateSkyLight(chunkManager, sunlightQueue, chunksToRemesh);
 
         return chunksToRemesh;
     }
@@ -262,9 +683,6 @@ namespace WillowVox::VoxelLighting
                     }
                 }
             }
-
-            // ...
-
             // Positive X
             {
                 int nx = x + 1;
@@ -404,18 +822,6 @@ namespace WillowVox::VoxelLighting
 
         return chunksToRemesh;
     }
-
-    struct LightRemovalNode
-    {
-        LightRemovalNode(int x, int y, int z, ChunkData* chunk, int value)
-            : x(x), y(y), z(z), chunk(chunk), value(value)
-        {}
-        int x;
-        int y;
-        int z;
-        int value;
-        ChunkData* chunk;
-    };
 
     std::unordered_set<glm::ivec3> RemoveLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z)
     {
