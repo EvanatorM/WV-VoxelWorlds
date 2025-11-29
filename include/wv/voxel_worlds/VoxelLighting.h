@@ -15,10 +15,6 @@ namespace WillowVox
         // Returns a set of chunk ids that need to be remeshed
         std::unordered_set<glm::ivec3> CalculateFullLighting(ChunkManager* chunkManager, ChunkData* chunkData);
 
-        // Calculate sky lighting for the given chunk
-        // Returns a set of chunk ids that need to be remeshed
-        std::unordered_set<glm::ivec3> CalculateSkyLighting(ChunkManager* chunkManager, ChunkData* chunkData);
-
         // Add a skylight blocker at the given local chunk position
         // Returns a set of chunk ids that need to be remeshed
         std::unordered_set<glm::ivec3> AddSkyLightBlocker(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z);
@@ -26,7 +22,7 @@ namespace WillowVox
         // Remove a skylight blocker at the given local chunk position
         // Returns a set of chunk ids that need to be remeshed
         std::unordered_set<glm::ivec3> RemoveSkyLightBlocker(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z);
-        
+
         // Add a light emitter at the given local chunk position with the given light level
         // Returns a set of chunk ids that need to be remeshed
         std::unordered_set<glm::ivec3> AddLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z, int lightLevel);
