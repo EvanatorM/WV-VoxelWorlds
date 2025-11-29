@@ -12,7 +12,12 @@ namespace WillowVox
     {
         // Calculate full lighting for the given chunk
         // Only do this during initial generation as it is expensive
-        void CalculateFullLighting(ChunkManager* chunkManager, ChunkData* chunkData);
+        // Returns a set of chunk ids that need to be remeshed
+        std::unordered_set<glm::ivec3> CalculateFullLighting(ChunkManager* chunkManager, ChunkData* chunkData);
+
+        // Calculate sky lighting for the given chunk
+        // Returns a set of chunk ids that need to be remeshed
+        std::unordered_set<glm::ivec3> CalculateSkyLighting(ChunkManager* chunkManager, ChunkData* chunkData);
 
         // Add a light emitter at the given local chunk position with the given light level
         // Returns a set of chunk ids that need to be remeshed

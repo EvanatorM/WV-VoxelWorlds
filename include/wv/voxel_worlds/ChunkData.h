@@ -28,6 +28,16 @@ namespace WillowVox
             return y + CHUNK_SIZE * (x + CHUNK_SIZE * z);
         }
 
+        constexpr bool IsEmpty() noexcept
+        {
+            for (int i = 0; i < CHUNK_VOLUME; ++i)
+            {
+                if (voxels[i] != 0)
+                    return false;
+            }
+            return true;
+        }
+
         inline BlockId Get(int x, int y, int z) const noexcept
         {
             assert(InBounds(x, y, z));
@@ -43,6 +53,8 @@ namespace WillowVox
         inline void ClearLight() noexcept
         {
             for (auto& v : lightLevels)
+                v = 0;
+            for (auto& v : skyLightLevels)
                 v = 0;
         }
 
@@ -70,8 +82,21 @@ namespace WillowVox
             lightLevels[Index(x, y, z)] = value;
         }
 
+        inline int GetSkyLightLevel(int x, int y, int z) const noexcept
+        {
+            assert(InBounds(x, y, z));
+            return skyLightLevels[Index(x, y, z)];
+        }
+
+        inline void SetSkyLightLevel(int x, int y, int z, int value) noexcept
+        {
+            assert(InBounds(x, y, z));
+            skyLightLevels[Index(x, y, z)] = value;
+        }
+
         BlockId voxels[CHUNK_VOLUME];
         int lightLevels[CHUNK_VOLUME];
+        int skyLightLevels[CHUNK_VOLUME];
 
         glm::ivec3 id;
     };

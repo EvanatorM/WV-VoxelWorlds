@@ -8,11 +8,6 @@ namespace WillowVox::VoxelLighting
 {
     std::mutex lightingMutex;
 
-    void CalculateFullLighting(ChunkManager* chunkManager, ChunkData* chunkData)
-    {
-        chunkData->ClearLight();
-    }
-
     struct LightNode
     {
         LightNode(int x, int y, int z, ChunkData* chunk)
@@ -24,6 +19,189 @@ namespace WillowVox::VoxelLighting
         int z;
         ChunkData* chunk;
     };
+
+    std::unordered_set<glm::ivec3> CalculateFullLighting(ChunkManager* chunkManager, ChunkData* chunkData)
+    {
+        chunkData->ClearLight();
+
+        auto chunksToRemesh = CalculateSkyLighting(chunkManager, chunkData);
+        chunksToRemesh.insert(chunkData->id);
+        return chunksToRemesh;
+    }
+
+    std::unordered_set<glm::ivec3> CalculateSkyLighting(ChunkManager* chunkManager, ChunkData* chunkData)
+    {
+        std::unordered_set<glm::ivec3> chunksToRemesh;
+        chunksToRemesh.insert(chunkData->id);
+        std::queue<LightNode> sunlightQueue;
+
+        for (int x = 0; x < CHUNK_SIZE; ++x)
+        {
+            for (int z = 0; z < CHUNK_SIZE; ++z)
+            {
+                // Check if top block is empty
+                if (chunkData->Get(x, CHUNK_SIZE - 1, z) == 0)
+                {
+                    // Set sky light level to maximum and enqueue
+                    chunkData->SetSkyLightLevel(x, CHUNK_SIZE - 1, z, 15);
+                    sunlightQueue.emplace(x, CHUNK_SIZE - 1, z, chunkData);
+                }
+            }
+        }
+
+        // Propagate sunlight
+        while (!sunlightQueue.empty())
+        {
+            LightNode& node = sunlightQueue.front();
+            int x = node.x;
+            int y = node.y;
+            int z = node.z;
+            ChunkData* currentChunk = node.chunk;
+            sunlightQueue.pop();
+
+            int skyLightLevel = currentChunk->GetSkyLightLevel(x, y, z);
+
+
+            // Propagate
+            // Negative Y
+            {
+                int ny = y - 1;
+                int nx = x;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, -1, 0));
+                    ny += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel);
+                            sunlightQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Negative X
+            {
+                int nx = x - 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(-1, 0, 0));
+                    nx += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
+                            sunlightQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Positive X
+            {
+                int nx = x + 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(1, 0, 0));
+                    nx -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
+                            sunlightQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Negative Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z - 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, -1));
+                    nz += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
+                            sunlightQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Positive Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z + 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1)).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, 1));
+                    nz -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
+                            sunlightQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+        }
+
+        return chunksToRemesh;
+    }
 
     std::unordered_set<glm::ivec3> AddLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z, int lightLevel)
     {

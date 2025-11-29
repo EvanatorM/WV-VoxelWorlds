@@ -607,6 +607,11 @@ namespace WillowVox
 
                 // Create chunk data
                 auto data = GetOrGenerateChunkData(id);
+                std::unordered_set<glm::ivec3> chunksToRemesh;
+                {
+                    std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::lightingMutex);
+                    chunksToRemesh = WillowVox::VoxelLighting::CalculateFullLighting(this, m_chunkData[id].get());
+                }
 
                 // Create chunk renderer
                 auto chunk = std::make_shared<ChunkRenderer>(m_chunkData[id], id);
@@ -620,8 +625,17 @@ namespace WillowVox
                 chunk->SetDownData(GetOrGenerateChunkData({ id.x, id.y - 1, id.z }));
 
                 // Generate chunk mesh data
-                //StartChunkMeshJob(m_chunkThreadPool, chunk);
                 chunk->GenerateMesh();
+                for (auto& chunkIdToRemesh : chunksToRemesh)
+                {
+                    auto rendererToRemesh = GetChunkRenderer(chunkIdToRemesh);
+                    if (rendererToRemesh)
+                    {
+                        uint32_t currentVersion = ++rendererToRemesh->m_version;
+                        std::lock_guard<std::mutex> lock(rendererToRemesh->m_generationMutex);
+                        rendererToRemesh->GenerateMesh(currentVersion);
+                    }
+                }
 
                 // Add chunk to map
                 {
