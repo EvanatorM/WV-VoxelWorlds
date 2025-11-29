@@ -7,6 +7,7 @@
 namespace WillowVox::VoxelLighting
 {
     std::mutex lightingMutex;
+    std::mutex skyLightingMutex;
 
     struct LightNode
     {
@@ -35,16 +36,19 @@ namespace WillowVox::VoxelLighting
         chunksToRemesh.insert(chunkData->id);
         std::queue<LightNode> sunlightQueue;
 
-        for (int x = 0; x < CHUNK_SIZE; ++x)
+        if (chunkData->id.y >= -1)
         {
-            for (int z = 0; z < CHUNK_SIZE; ++z)
+            for (int x = 0; x < CHUNK_SIZE; ++x)
             {
-                // Check if top block is empty
-                if (chunkData->Get(x, CHUNK_SIZE - 1, z) == 0)
+                for (int z = 0; z < CHUNK_SIZE; ++z)
                 {
-                    // Set sky light level to maximum and enqueue
-                    chunkData->SetSkyLightLevel(x, CHUNK_SIZE - 1, z, 15);
-                    sunlightQueue.emplace(x, CHUNK_SIZE - 1, z, chunkData);
+                    // Check if top block is empty
+                    if (chunkData->Get(x, CHUNK_SIZE - 1, z) == 0)
+                    {
+                        // Set sky light level to maximum and enqueue
+                        chunkData->SetSkyLightLevel(x, CHUNK_SIZE - 1, z, 15);
+                        sunlightQueue.emplace(x, CHUNK_SIZE - 1, z, chunkData);
+                    }
                 }
             }
         }

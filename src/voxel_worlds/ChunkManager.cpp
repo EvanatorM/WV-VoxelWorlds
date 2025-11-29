@@ -277,25 +277,6 @@ namespace WillowVox
             }
             else
                 StartLightBlockerAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
-
-            // Start recalculate lighting job for current and surrounding chunks
-            /*StartLightingRecalculationJob(m_chunkThreadPool, this, chunk, GetChunkRenderer(chunkId));
-
-            for (int dx = -1; dx <= 1; dx++)
-            {
-                for (int dy = -1; dy <= 1; dy++)
-                {
-                    for (int dz = -1; dz <= 1; dz++)
-                    {
-                        if (dx == 0 && dy == 0 && dz == 0) continue;
-
-                        auto neighborChunkId = chunkId + glm::ivec3(dx, dy, dz);
-                        auto neighborChunkData = GetChunkData(neighborChunkId);
-                        auto neighborChunkRenderer = GetChunkRenderer(neighborChunkId);
-                        StartLightingRecalculationJob(m_chunkThreadPool, this, neighborChunkData, neighborChunkRenderer);
-                    }
-                }
-            }*/
         }
     }
 
@@ -609,7 +590,7 @@ namespace WillowVox
                 auto data = GetOrGenerateChunkData(id);
                 std::unordered_set<glm::ivec3> chunksToRemesh;
                 {
-                    std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::lightingMutex);
+                    std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::skyLightingMutex);
                     chunksToRemesh = WillowVox::VoxelLighting::CalculateFullLighting(this, m_chunkData[id].get());
                 }
 

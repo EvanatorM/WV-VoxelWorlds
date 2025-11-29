@@ -36,5 +36,6 @@ namespace WillowVox
         std::unordered_set<glm::ivec3> RemoveLightBlocker(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z);
 
         extern std::mutex lightingMutex;
+        extern std::mutex skyLightingMutex;
     }
 }
