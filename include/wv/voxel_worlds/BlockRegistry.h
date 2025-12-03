@@ -150,19 +150,19 @@ namespace WillowVox
             am.AddAsset<Texture>("chunk_texture", tex);
 
             // Generate block definitions
-            m_blocks[0] = { "air", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0 };
+            m_blocks[0] = { "air", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0 };
             for (auto& [strId, tex] : m_tempBlockRegistry)
             {
                 auto& topPos = texPositions[tex.top];
                 auto& bottomPos = texPositions[tex.bottom];
                 auto& sidePos = texPositions[tex.side];
-                Block block(strId,
+                Block block(strId, ++m_idCounter,
                     topPos.x, topPos.z, topPos.y, topPos.w,
                     bottomPos.x, bottomPos.z, bottomPos.y, bottomPos.w,
                     sidePos.x, sidePos.z, sidePos.y, sidePos.w,
                     tex.lightEmitter, tex.lightLevel
                 );
-                m_blocks[++m_idCounter] = block;
+                m_blocks[m_idCounter] = block;
                 m_strIdToNumId[strId] = m_idCounter;
             }
         }
