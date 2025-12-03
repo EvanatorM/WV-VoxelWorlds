@@ -87,12 +87,10 @@ namespace WillowVox
             int atlasHeight = 2;
             while (atlasWidth * atlasHeight < numTextures)
             {
-                //if (atlasWidth == atlasHeight)
-                //    atlasWidth *= 2;
-                //else
-                //    atlasHeight *= 2;
-                atlasWidth *= 2;
-                atlasHeight *= 2;
+                if (atlasWidth == atlasHeight)
+                    atlasWidth *= 2;
+                else
+                    atlasHeight *= 2;
             }
 
             // Get size of textures
@@ -107,7 +105,7 @@ namespace WillowVox
             int atlasPixelsX = atlasWidth * texWidth;
             int atlasPixelsY = atlasHeight * texHeight;
             std::vector<unsigned char> chunkTexture(
-                (atlasWidth * texWidth * 4) * (atlasHeight * texHeight * 4));
+                (atlasPixelsX * 4) * (atlasPixelsY * 4));
 
             Logger::Log("Creating texture atlas with %d textures. Size: %dx%d (%dx%d pixels).", numTextures, atlasWidth, atlasHeight, atlasPixelsX, atlasPixelsY);
 
@@ -124,14 +122,16 @@ namespace WillowVox
                     Logger::Warn("Size of texture '%s' (%dx%d) does not match the expected size (%dx%d)", path, width, height, texWidth, texHeight);
 
                 // Get start coordinates
-                int xStart = (id % atlasWidth) * texWidth;
-                int yStart = (id / atlasHeight) * texHeight;
+                int xId = id % atlasWidth;
+                int yId = id / atlasWidth;
+                int xStart = xId * texWidth;
+                int yStart = yId * texHeight;
 
                 texPositions[id] = {
-                    xStart / (float)atlasPixelsX,
-                    yStart / (float)atlasPixelsY,
-                    (xStart + texWidth) / (float)atlasPixelsX,
-                    (yStart + texHeight) / (float)atlasPixelsY
+                    xId / (float)atlasWidth,
+                    yId / (float)atlasHeight,
+                    (xId + 1) / (float)atlasWidth,
+                    (yId + 1) / (float)atlasHeight
                 };
 
                 // Set the texture data on the atlas
@@ -140,7 +140,7 @@ namespace WillowVox
                     for (int y = 0; y < texHeight; y++)
                     {
                         for (int c = 0; c < 4; c++)
-                            chunkTexture[(y + yStart) * (atlasPixelsY * 4) + (x + xStart) * 4 + c] = texData[y * (texHeight * 4) + x * 4 + c];
+                            chunkTexture[(y + yStart) * (atlasPixelsX * 4) + (x + xStart) * 4 + c] = texData[y * (texWidth * 4) + x * 4 + c];
                     }
                 }
             }
