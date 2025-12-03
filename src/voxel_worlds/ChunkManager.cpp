@@ -606,7 +606,6 @@ namespace WillowVox
                         std::shared_lock<std::shared_mutex> chunkRenderLock(m_chunkRendererMutex);
                         for (auto& [id, data] : m_chunkData)
                         {
-                            glm::ivec3 id = data->id;
                             if (m_chunkRenderers.find(id) == m_chunkRenderers.end() &&
                                 m_chunkRenderers.find({ id.x + 1, id.y, id.z }) == m_chunkRenderers.end() &&
                                 m_chunkRenderers.find({ id.x - 1, id.y, id.z }) == m_chunkRenderers.end() &&
