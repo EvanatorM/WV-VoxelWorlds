@@ -570,7 +570,6 @@ namespace WillowVox
                         std::shared_lock<std::shared_mutex> chunkRenderLock(m_chunkRendererMutex);
                         for (auto& [id, chunk] : m_chunkRenderers)
                         {
-                            glm::ivec3 id = chunk->m_chunkId;
                             if (std::abs(id.x - chunkX) > m_renderDistance ||
                                 std::abs(id.y - chunkY) > m_renderHeight ||
                                 std::abs(id.z - chunkZ) > m_renderDistance)
