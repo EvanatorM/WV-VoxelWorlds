@@ -7,7 +7,7 @@
 namespace WillowVox
 {
     ChunkManager::ChunkManager(WorldGen* worldGen, int numChunkThreads, int worldSizeX, int worldMinY, int worldMaxY, int worldSizeZ)
-        : m_worldGen(worldGen), m_chunkThreadPool(512), m_worldSizeX(worldSizeX), m_worldMinY(worldMinY), m_worldMaxY(worldMaxY), m_worldSizeZ(worldSizeZ)
+        : m_worldGen(worldGen), m_worldSizeX(worldSizeX), m_worldMinY(worldMinY), m_worldMaxY(worldMaxY), m_worldSizeZ(worldSizeZ)
     {
         // Load assets
         auto& am = AssetManager::GetInstance();
@@ -25,27 +25,25 @@ namespace WillowVox
     {
         m_chunkThreadShouldStop = true;
         m_chunkThread.join();
-
-        m_chunkThreadPool.Stop();
     }
 
-    inline void StartChunkMeshJob(ThreadPool& pool, std::shared_ptr<ChunkRenderer> renderer, bool highPriority = false)
+    inline void StartChunkMeshJob(ThreadPool& pool, std::shared_ptr<ChunkRenderer> renderer, Priority priority = Priority::Medium)
     {
         if (!renderer)
             return;
 
         std::weak_ptr<ChunkRenderer> weakChunkPtr = renderer;
-        pool.QueueJob([weakChunkPtr] {
+        pool.Enqueue([weakChunkPtr] {
             if (auto chunkPtr = weakChunkPtr.lock())
             {
                 uint32_t currentVersion = ++chunkPtr->m_version;
                 std::lock_guard<std::mutex> lock(chunkPtr->m_generationMutex);
                 chunkPtr->GenerateMesh(currentVersion);
             }
-        }, highPriority);
+        }, priority);
     }
 
-    inline void StartBatchChunkMeshJob(ThreadPool& pool, std::vector<std::shared_ptr<ChunkRenderer>> renderers, bool highPriority = false)
+    inline void StartBatchChunkMeshJob(ThreadPool& pool, std::vector<std::shared_ptr<ChunkRenderer>> renderers, Priority priority = Priority::Medium)
     {
         std::vector<std::weak_ptr<ChunkRenderer>> weakPtrs;
         std::vector<uint32_t> versions;
@@ -59,7 +57,7 @@ namespace WillowVox
             versions.push_back(++r->m_version);
         }
 
-        pool.QueueJob([weakPtrs, versions, highPriority] {
+        pool.Enqueue([weakPtrs, versions, priority] {
             for (size_t i = 0; i < weakPtrs.size(); ++i)
             {
                 auto& weakChunkPtr = weakPtrs[i];
@@ -67,7 +65,7 @@ namespace WillowVox
                 if (auto chunkPtr = weakChunkPtr.lock())
                 {
                     std::lock_guard<std::mutex> lock(chunkPtr->m_generationMutex);
-                    chunkPtr->GenerateMesh(currentVersion, highPriority);
+                    chunkPtr->GenerateMesh(currentVersion, true);
                 }
             }
 
@@ -76,17 +74,17 @@ namespace WillowVox
                 if (auto chunkPtr = weakChunkPtr.lock())
                     chunkPtr->MarkDirty();
             }
-        }, highPriority);
+        }, priority);
     }
 
-    inline void StartLightingRecalculationJob(ThreadPool& pool, ChunkManager* chunkManager, std::shared_ptr<ChunkData> chunkData, std::shared_ptr<ChunkRenderer> renderer, bool highPriority = false)
+    inline void StartLightingRecalculationJob(ThreadPool& pool, ChunkManager* chunkManager, std::shared_ptr<ChunkData> chunkData, std::shared_ptr<ChunkRenderer> renderer, Priority priority = Priority::Medium)
     {
         if (!chunkData)
             return;
 
         std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
         std::weak_ptr<ChunkRenderer> weakChunkRendererPtr = renderer;
-        pool.QueueJob([chunkManager, weakChunkDataPtr, weakChunkRendererPtr] {
+        pool.Enqueue([chunkManager, weakChunkDataPtr, weakChunkRendererPtr] {
             if (auto chunkDataPtr = weakChunkDataPtr.lock())
             {
                 {
@@ -99,16 +97,16 @@ namespace WillowVox
                     chunkRendererPtr->GenerateMesh(currentVersion);
                 }
             }
-        }, highPriority);
+        }, priority);
     }
 
-    inline void StartLightAddJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, int lightLevel, bool highPriority = false)
+    inline void StartLightAddJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, int lightLevel, Priority priority = Priority::Medium)
     {
         if (!chunkData)
             return;
 
         std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
-        pool.QueueJob([&chunkManager, weakChunkDataPtr, x, y, z, lightLevel] {
+        pool.Enqueue([&chunkManager, weakChunkDataPtr, x, y, z, lightLevel] {
             if (auto chunkDataPtr = weakChunkDataPtr.lock())
             {
                 std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::lightingMutex);
@@ -126,16 +124,16 @@ namespace WillowVox
                     }
                 }
             }
-        }, highPriority);
+        }, priority);
     }
 
-    inline void StartLightRemovalJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, bool highPriority = false)
+    inline void StartLightRemovalJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, Priority priority = Priority::Medium)
     {
         if (!chunkData)
             return;
 
         std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
-        pool.QueueJob([&chunkManager, weakChunkDataPtr, x, y, z] {
+        pool.Enqueue([&chunkManager, weakChunkDataPtr, x, y, z] {
             if (auto chunkDataPtr = weakChunkDataPtr.lock())
             {
                 std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::lightingMutex);
@@ -153,16 +151,16 @@ namespace WillowVox
                     }
                 }
             }
-        }, highPriority);
+        }, priority);
     }
 
-    inline void StartLightBlockerAddJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, bool highPriority = false)
+    inline void StartLightBlockerAddJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, Priority priority = Priority::Medium)
     {
         if (!chunkData)
             return;
 
         std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
-        pool.QueueJob([&chunkManager, weakChunkDataPtr, x, y, z] {
+        pool.Enqueue([&chunkManager, weakChunkDataPtr, x, y, z] {
             if (auto chunkDataPtr = weakChunkDataPtr.lock())
             {
                 std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::lightingMutex);
@@ -180,16 +178,16 @@ namespace WillowVox
                     }
                 }
             }
-        }, highPriority);
+        }, priority);
     }
 
-    inline void StartLightBlockerRemovalJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, bool highPriority = false)
+    inline void StartLightBlockerRemovalJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, Priority priority = Priority::Medium)
     {
         if (!chunkData)
             return;
 
         std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
-        pool.QueueJob([&chunkManager, weakChunkDataPtr, x, y, z] {
+        pool.Enqueue([&chunkManager, weakChunkDataPtr, x, y, z] {
             if (auto chunkDataPtr = weakChunkDataPtr.lock())
             {
                 std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::lightingMutex);
@@ -207,16 +205,16 @@ namespace WillowVox
                     }
                 }
             }
-        }, highPriority);
+        }, priority);
     }
 
-    inline void StartSkyLightBlockerAddJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, bool highPriority = false)
+    inline void StartSkyLightBlockerAddJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, Priority priority = Priority::Medium)
     {
         if (!chunkData)
             return;
 
         std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
-        pool.QueueJob([&chunkManager, weakChunkDataPtr, x, y, z] {
+        pool.Enqueue([&chunkManager, weakChunkDataPtr, x, y, z] {
             if (auto chunkDataPtr = weakChunkDataPtr.lock())
             {
                 std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::skyLightingMutex);
@@ -234,16 +232,16 @@ namespace WillowVox
                     }
                 }
             }
-        }, highPriority);
+        }, priority);
     }
 
-    inline void StartSkyLightBlockerRemovalJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, bool highPriority = false)
+    inline void StartSkyLightBlockerRemovalJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, Priority priority = Priority::Medium)
     {
         if (!chunkData)
             return;
 
         std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
-        pool.QueueJob([&chunkManager, weakChunkDataPtr, x, y, z] {
+        pool.Enqueue([&chunkManager, weakChunkDataPtr, x, y, z] {
             if (auto chunkDataPtr = weakChunkDataPtr.lock())
             {
                 std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::skyLightingMutex);
@@ -261,7 +259,7 @@ namespace WillowVox
                     }
                 }
             }
-        }, highPriority);
+        }, priority);
     }
 
     void ChunkManager::SetBlockId(float x, float y, float z, BlockId blockId)
@@ -315,31 +313,31 @@ namespace WillowVox
             }
 
             // Start remesh job
-            StartBatchChunkMeshJob(m_chunkThreadPool, chunksToRemesh, true);
+            StartBatchChunkMeshJob(m_chunkThreadPool, chunksToRemesh, Priority::High);
 
             // Handle lighting updates
             if (block.lightEmitter)
             {
-                StartLightAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, block.lightLevel, true);
-                StartSkyLightBlockerAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
+                StartLightAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, block.lightLevel, Priority::High);
+                StartSkyLightBlockerAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, Priority::High);
             }
             else if (blockId == 0)
             {
                 if (blockRegistry.GetBlock(oldBlockId).lightEmitter)
                 {
-                    StartLightRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
-                    StartSkyLightBlockerRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
+                    StartLightRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, Priority::High);
+                    StartSkyLightBlockerRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, Priority::High);
                 }
                 else
                 {
-                    StartLightBlockerRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
-                    StartSkyLightBlockerRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
+                    StartLightBlockerRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, Priority::High);
+                    StartSkyLightBlockerRemovalJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, Priority::High);
                 }
             }
             else
             {
-                StartLightBlockerAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
-                StartSkyLightBlockerAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, true);
+                StartLightBlockerAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, Priority::High);
+                StartSkyLightBlockerAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, Priority::High);
             }
         }
     }
