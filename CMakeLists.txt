@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(WVVoxelWorlds STATIC
     src/physics/VoxelRaycast.cpp
 
-    src/voxel_worlds/ChunkData.cpp
     src/voxel_worlds/ChunkManager.cpp
     src/voxel_worlds/ChunkRenderer.cpp
     src/voxel_worlds/VoxelLighting.cpp
