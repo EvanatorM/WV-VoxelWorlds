@@ -191,6 +191,18 @@ namespace WillowVox
                 return it->second;
         }
 
+        const BlockId GetBlockId(const std::string& strId) const
+        {
+            auto it = m_strIdToNumId.find(strId);
+            if (it == m_strIdToNumId.end())
+            {
+                Logger::Error("Invalid block id: %s", strId.c_str());
+                throw std::out_of_range("Invalid block id");
+            }
+            else
+                return it->second;
+        }
+
     private:
         struct TempBlock
         {
