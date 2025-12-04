@@ -23,7 +23,7 @@ namespace WillowVox
             texId = it->second;
 
         // Set the temp block def texture to texture id
-        m_tempBlockRegistry[strId] = { texId, texId, texId, lightEmitter, lightLevel };
+        m_tempBlockRegistry[strId] = { texId, texId, texId, lightEmitter, lightLevel, ++m_idCounter };
     }
 
     void BlockRegistry::RegisterBlock(const std::string& strId, const std::string& topTexturePath,
@@ -65,7 +65,7 @@ namespace WillowVox
         }
 
         // Set the temp block def texture to texture id
-        m_tempBlockRegistry[strId] = { topTexId, bottomTexId, sideTexId, lightEmitter, lightLevel };
+        m_tempBlockRegistry[strId] = { topTexId, bottomTexId, sideTexId, lightEmitter, lightLevel, ++m_idCounter };
     }
 
     void BlockRegistry::ApplyRegistry()
@@ -148,14 +148,14 @@ namespace WillowVox
             auto& topPos = texPositions[tex.top];
             auto& bottomPos = texPositions[tex.bottom];
             auto& sidePos = texPositions[tex.side];
-            Block block(strId, ++m_idCounter,
+            Block block(strId, tex.id,
                 topPos.x, topPos.z, topPos.y, topPos.w,
                 bottomPos.x, bottomPos.z, bottomPos.y, bottomPos.w,
                 sidePos.x, sidePos.z, sidePos.y, sidePos.w,
                 tex.lightEmitter, tex.lightLevel
             );
-            m_blocks[m_idCounter] = block;
-            m_strIdToNumId[strId] = m_idCounter;
+            m_blocks[tex.id] = block;
+            m_strIdToNumId[strId] = tex.id;
         }
     }
 

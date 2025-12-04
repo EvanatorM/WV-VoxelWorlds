@@ -39,6 +39,7 @@ namespace WillowVox
             int side;
             bool lightEmitter;
             int lightLevel;
+            BlockId id;
         };
 
         std::unordered_map<std::string, BlockId> m_strIdToNumId;
