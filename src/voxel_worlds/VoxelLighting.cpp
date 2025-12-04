@@ -96,7 +96,7 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
                             targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
@@ -123,7 +123,7 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
                             targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
@@ -150,7 +150,7 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
                             targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
@@ -177,7 +177,7 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
                             targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
@@ -204,7 +204,7 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
                             targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
