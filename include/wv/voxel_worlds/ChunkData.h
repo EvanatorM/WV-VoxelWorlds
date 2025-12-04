@@ -8,6 +8,13 @@
 
 namespace WillowVox
 {
+    enum class LightingStage : uint8_t
+    {
+        WorldGenInProgress = 0,
+        ReadyForLighting = 1,
+        LocalLightCalculated = 2
+    };
+
     struct ChunkData
     {
         ChunkData(const glm::ivec3& id)
@@ -94,9 +101,17 @@ namespace WillowVox
             skyLightLevels[Index(x, y, z)] = value;
         }
 
+        // Block data
         BlockId voxels[CHUNK_VOLUME];
+
+        // Light data
         int lightLevels[CHUNK_VOLUME];
         int skyLightLevels[CHUNK_VOLUME];
+
+        // To be used by client-implemented world generation functions
+        uint8_t worldGenStage = 0;
+        // To be used by the lighting engine
+        LightingStage lightingStage = LightingStage::WorldGenInProgress;
 
         glm::ivec3 id;
     };

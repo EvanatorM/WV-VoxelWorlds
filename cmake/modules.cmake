@@ -12,6 +12,6 @@ macro(_add_git_project NAME REPO COMMIT)
 endmacro()
 
 # Add core module
-_add_git_project(WVCore https://github.com/EvanatorM/WV-Core.git alpha-v0.2.3)
+_add_git_project(WVCore https://github.com/EvanatorM/WV-Core.git alpha-v0.3.0)
 target_link_libraries(${PROJECT_NAME} PRIVATE WVCore)
 target_include_directories(${PROJECT_NAME} PUBLIC ${wvcore_SOURCE_DIR}/include)

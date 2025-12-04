@@ -3,9 +3,13 @@
 #include <wv/voxel_worlds/VoxelLighting.h>
 #include <algorithm>
 #include <chrono>
+#include <fstream>
+#include <filesystem>
 
 namespace WillowVox
 {
+    std::string SAVE_PATH = "./world";
+
     ChunkManager::ChunkManager(WorldGen* worldGen, int numChunkThreads, int worldSizeX, int worldMinY, int worldMaxY, int worldSizeZ)
         : m_worldGen(worldGen), m_worldSizeX(worldSizeX), m_worldMinY(worldMinY), m_worldMaxY(worldMaxY), m_worldSizeZ(worldSizeZ)
     {
@@ -19,12 +23,25 @@ namespace WillowVox
 
         // Start chunk thread
         m_chunkThread = std::thread(&ChunkManager::ChunkThread, this);
+
+        if (!std::filesystem::exists(SAVE_PATH))
+        {
+            std::filesystem::create_directory(SAVE_PATH);
+        }
     }
 
     ChunkManager::~ChunkManager()
     {
+        // Stop chunk thread
         m_chunkThreadShouldStop = true;
         m_chunkThread.join();
+
+        // Save all chunk data to files
+        std::shared_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
+        for (auto& [id, chunkData] : m_chunkData)
+        {
+            SaveChunkDataToFile(chunkData, SAVE_PATH);
+        }
     }
 
     inline void StartChunkMeshJob(ThreadPool& pool, std::shared_ptr<ChunkRenderer> renderer, Priority priority = Priority::Medium)
@@ -418,6 +435,90 @@ namespace WillowVox
         }
     }
 
+    
+    void ChunkManager::SaveChunkDataToFile(std::shared_ptr<ChunkData> chunk, const std::string& savePath)
+    {
+        // File Format:
+        // [2 bytes] Version number (uint16_t)
+        // [CHUNK_VOLUME bytes] BlockId array
+        // [CHUNK_VOLUME bytes] Light level array
+        // [CHUNK_VOLUME bytes] Sky light level array
+        // [1 byte ] World generation stage (uint8_t)
+        // [1 byte ] Lighting stage (uint8_t)
+
+        // Construct file path
+        std::string filePath = savePath + "/chunk_" +
+            std::to_string(chunk->id.x) + "_" +
+            std::to_string(chunk->id.y) + "_" +
+            std::to_string(chunk->id.z) + ".dat";
+        
+        // Open file for binary writing
+        std::ofstream outFile(filePath, std::ios::binary);
+        if (outFile.is_open())
+        {
+            outFile.write(reinterpret_cast<const char*>(&CHUNK_DATA_VERSION), sizeof(CHUNK_DATA_VERSION));
+            outFile.write(reinterpret_cast<const char*>(chunk->voxels), sizeof(chunk->voxels));
+            outFile.write(reinterpret_cast<const char*>(chunk->lightLevels), sizeof(chunk->lightLevels));
+            outFile.write(reinterpret_cast<const char*>(chunk->skyLightLevels), sizeof(chunk->skyLightLevels));
+            outFile.write(reinterpret_cast<const char*>(&chunk->worldGenStage), sizeof(chunk->worldGenStage));
+            uint8_t lightingStage = static_cast<uint8_t>(chunk->lightingStage);
+            outFile.write(reinterpret_cast<const char*>(&lightingStage), sizeof(lightingStage));
+            outFile.close();
+        }
+        else
+        {
+            Logger::Error("Failed to write chunk data (%d %d %d) to file: %s", chunk->id.x, chunk->id.y, chunk->id.z, filePath.c_str());
+        }
+    }
+    
+    std::shared_ptr<ChunkData> ChunkManager::LoadChunkDataFromFile(const glm::ivec3& id, const std::string& savePath)
+    {
+        // File Format:
+        // [2 bytes] Version number (uint16_t)
+        // [CHUNK_VOLUME bytes] BlockId array
+        // [CHUNK_VOLUME bytes] Light level array
+        // [CHUNK_VOLUME bytes] Sky light level array
+        // [1 byte ] World generation stage (uint8_t)
+        // [1 byte ] Lighting stage (uint8_t)
+
+        // Construct file path
+        std::string filePath = savePath + "/chunk_" +
+            std::to_string(id.x) + "_" +
+            std::to_string(id.y) + "_" +
+            std::to_string(id.z) + ".dat";
+
+        // Open file for binary reading
+        std::ifstream inFile(filePath, std::ios::binary);
+        if (inFile.is_open())
+        {
+            uint16_t version;
+            inFile.read(reinterpret_cast<char*>(&version), sizeof(version));
+            if (version != CHUNK_DATA_VERSION)
+            {
+                Logger::Warn("Chunk data version mismatch (%d != %d) for chunk (%d %d %d). Regenerating chunk.", version, CHUNK_DATA_VERSION, id.x, id.y, id.z);
+                inFile.close();
+                return nullptr;
+            }
+
+            auto chunkData = std::make_shared<ChunkData>(id);
+            inFile.read(reinterpret_cast<char*>(chunkData->voxels), sizeof(chunkData->voxels));
+            inFile.read(reinterpret_cast<char*>(chunkData->lightLevels), sizeof(chunkData->lightLevels));
+            inFile.read(reinterpret_cast<char*>(chunkData->skyLightLevels), sizeof(chunkData->skyLightLevels));
+            inFile.read(reinterpret_cast<char*>(&chunkData->worldGenStage), sizeof(chunkData->worldGenStage));
+            uint8_t lightingStage;
+            inFile.read(reinterpret_cast<char*>(&lightingStage), sizeof(lightingStage));
+            chunkData->lightingStage = static_cast<LightingStage>(lightingStage);
+
+            inFile.close();
+            return chunkData;
+        }
+        else
+        {
+            Logger::Log("Chunk data file not found for chunk (%d %d %d). Generating new chunk.", id.x, id.y, id.z);
+            return nullptr;
+        }
+    }
+
     std::shared_ptr<ChunkData> ChunkManager::GetOrGenerateChunkData(const glm::ivec3& id)
     {
         // Get chunk data if it already exists
@@ -436,6 +537,17 @@ namespace WillowVox
             (m_worldSizeZ == 0 || (id.z >= -m_worldSizeZ && id.z <= m_worldSizeZ))))
         {
             return nullptr;
+        }
+
+        // Try to load chunk data from file
+        auto loadedData = LoadChunkDataFromFile(id, SAVE_PATH);
+        if (loadedData)
+        {
+            {
+                std::unique_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
+                m_chunkData[id] = loadedData;
+            }
+            return loadedData;
         }
 
         // Generate new chunk data
@@ -619,6 +731,17 @@ namespace WillowVox
                         }
                     }
 
+                    // Save chunk data out of range
+                    {
+                        for (auto& id : chunkDataToDelete)
+                        {
+                            auto chunkData = GetChunkData(id);
+                            if (chunkData)
+                            {
+                                SaveChunkDataToFile(chunkData, SAVE_PATH);
+                            }
+                        }
+                    }
                     // Delete chunk data out of range
                     {
                         std::unique_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
