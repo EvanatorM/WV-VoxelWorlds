@@ -283,7 +283,7 @@ namespace WillowVox
     {
         auto chunkId = WorldToChunkId(x, y, z);
         auto localPos = WorldToLocalChunkPos(x, y, z, chunkId);
-        auto chunk = GetChunkData(chunkId);
+        auto chunk = GetChunkData(chunkId, LightingStage::ReadyForLighting);
 
         if (chunk && chunk->InBounds(localPos.x, localPos.y, localPos.z))
         {
@@ -359,16 +359,121 @@ namespace WillowVox
         }
     }
 
-    std::shared_ptr<ChunkData> ChunkManager::GetChunkData(int x, int y, int z)
+    std::shared_ptr<ChunkData> ChunkManager::GetChunkData(int x, int y, int z, LightingStage requiredLightingStage, uint8_t requiredWorldGenStage)
     {
-        return GetChunkData({ x, y, z });
+        return GetChunkData({ x, y, z }, requiredLightingStage, requiredWorldGenStage);
     }
 
-    std::shared_ptr<ChunkData> ChunkManager::GetChunkDataAtPos(float x, float y, float z)
+    std::shared_ptr<ChunkData> ChunkManager::GetChunkDataAtPos(float x, float y, float z, LightingStage requiredLightingStage, uint8_t requiredWorldGenStage)
     {
         auto chunkId = WorldToChunkId(x, y, z);
 
-        return GetChunkData(chunkId);
+        return GetChunkData(chunkId, requiredLightingStage, requiredWorldGenStage);
+    }
+
+    std::shared_ptr<ChunkData> ChunkManager::GetChunkData(const glm::ivec3& id, LightingStage requiredLightingStage, uint8_t requiredWorldGenStage)
+    {
+        // Check if chunk is within world bounds
+        if (!((m_worldSizeX == 0 || (id.x >= -m_worldSizeX && id.x <= m_worldSizeX)) &&
+            (m_worldMinY == 0 || id.y >= -m_worldMinY) && (m_worldMaxY == 0 || id.y <= m_worldMaxY) &&
+            (m_worldSizeZ == 0 || (id.z >= -m_worldSizeZ && id.z <= m_worldSizeZ))))
+        {
+            return nullptr;
+        }
+        
+        std::shared_ptr<ChunkData> chunkData;
+
+        // Try to find existing chunk data
+        {
+            std::shared_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
+            auto it = m_chunkData.find(id);
+            if (it != m_chunkData.end())
+            {
+                chunkData = it->second;
+            }
+        }
+        
+        // If chunk data doesn't exist, load or create it
+        if (!chunkData)
+        {
+            // Load from file if it exists
+            chunkData = LoadChunkDataFromFile(id, SAVE_PATH);
+            if (!chunkData)
+            {
+                // Create new chunk data
+                chunkData = std::make_shared<ChunkData>(id);
+            }
+
+            {
+                std::unique_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
+                m_chunkData[id] = chunkData;
+            }
+        }
+
+        // Ensure chunk data meets required stages
+        // If lighting stage is insufficient, perform world generation and lighting as needed
+        if (requiredLightingStage > LightingStage::WorldGenInProgress)
+        {
+            // Finish world gen if necessary
+            if (chunkData->lightingStage == LightingStage::WorldGenInProgress)
+            {
+                m_worldGen->Generate(chunkData.get(), id * CHUNK_SIZE, 255);
+                chunkData->lightingStage = LightingStage::ReadyForLighting;
+            }
+
+            // Perform lighting if necessary
+            if (requiredLightingStage == LightingStage::LocalLightCalculated && chunkData->lightingStage < LightingStage::LocalLightCalculated)
+            {
+                auto chunksToRemesh = WillowVox::VoxelLighting::CalculateFullLighting(this, chunkData.get());
+                chunkData->lightingStage = LightingStage::LocalLightCalculated;
+
+                // Schedule remesh jobs for affected chunks
+                for (auto& chunkIdToRemesh : chunksToRemesh)
+                {
+                    auto rendererToRemesh = GetChunkRenderer(chunkIdToRemesh);
+                    if (rendererToRemesh)
+                    {
+                        StartChunkMeshJob(m_chunkThreadPool, rendererToRemesh);
+                    }
+                }
+            }
+        }
+        else if (chunkData->worldGenStage < requiredWorldGenStage)
+        {
+            m_worldGen->Generate(chunkData.get(), id * CHUNK_SIZE, requiredWorldGenStage);
+            chunkData->worldGenStage = requiredWorldGenStage;
+        }
+        
+        return chunkData;
+    }
+
+    std::shared_ptr<ChunkData> ChunkManager::TryGetChunkData(int x, int y, int z, LightingStage requiredLightingStage, uint8_t requiredWorldGenStage)
+    {
+        return TryGetChunkData({ x, y, z }, requiredLightingStage, requiredWorldGenStage);
+    }
+
+    std::shared_ptr<ChunkData> ChunkManager::TryGetChunkDataAtPos(float x, float y, float z, LightingStage requiredLightingStage, uint8_t requiredWorldGenStage)
+    {
+        auto chunkId = WorldToChunkId(x, y, z);
+
+        return TryGetChunkData(chunkId, requiredLightingStage, requiredWorldGenStage);
+    }
+
+    std::shared_ptr<ChunkData> ChunkManager::TryGetChunkData(const glm::ivec3& id, LightingStage requiredLightingStage, uint8_t requiredWorldGenStage)
+    {
+        std::shared_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
+        auto it = m_chunkData.find(id);
+        if (it == m_chunkData.end())
+        {
+            return nullptr;
+        }
+
+        if (it->second->lightingStage < requiredLightingStage)
+            return nullptr;
+        if (requiredLightingStage > LightingStage::WorldGenInProgress && it->second->worldGenStage < requiredWorldGenStage)
+            return nullptr;
+        
+        return it->second;
     }
 
     std::shared_ptr<ChunkRenderer> ChunkManager::GetChunkRenderer(int x, int y, int z)
@@ -381,15 +486,6 @@ namespace WillowVox
         auto chunkId = WorldToChunkId(x, y, z);
 
         return GetChunkRenderer(chunkId);
-    }
-
-    std::shared_ptr<ChunkData> ChunkManager::GetChunkData(const glm::ivec3& id)
-    {
-        std::shared_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
-        if (m_chunkData.find(id) != m_chunkData.end())
-            return m_chunkData[id];
-
-        return nullptr;
     }
 
     std::shared_ptr<ChunkRenderer> ChunkManager::GetChunkRenderer(const glm::ivec3& id)
@@ -514,65 +610,8 @@ namespace WillowVox
         }
         else
         {
-            Logger::Log("Chunk data file not found for chunk (%d %d %d). Generating new chunk.", id.x, id.y, id.z);
             return nullptr;
         }
-    }
-
-    std::shared_ptr<ChunkData> ChunkManager::GetOrGenerateChunkData(const glm::ivec3& id)
-    {
-        // Get chunk data if it already exists
-        {
-            std::shared_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
-            auto it = m_chunkData.find(id);
-            if (it != m_chunkData.end())
-            {
-                return it->second;
-            }
-        }
-
-        // Check if chunk is within world bounds
-        if (!((m_worldSizeX == 0 || (id.x >= -m_worldSizeX && id.x <= m_worldSizeX)) &&
-            (m_worldMinY == 0 || id.y >= -m_worldMinY) && (m_worldMaxY == 0 || id.y <= m_worldMaxY) &&
-            (m_worldSizeZ == 0 || (id.z >= -m_worldSizeZ && id.z <= m_worldSizeZ))))
-        {
-            return nullptr;
-        }
-
-        // Try to load chunk data from file
-        auto loadedData = LoadChunkDataFromFile(id, SAVE_PATH);
-        if (loadedData)
-        {
-            {
-                std::unique_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
-                m_chunkData[id] = loadedData;
-            }
-            return loadedData;
-        }
-
-        // Generate new chunk data
-        auto chunkPos = id * CHUNK_SIZE;
-
-        #ifdef DEBUG_MODE
-        auto start = std::chrono::high_resolution_clock::now();
-        #endif
-
-        auto data = std::make_shared<ChunkData>(id);
-        m_worldGen->Generate(data.get(), chunkPos);
-
-        #ifdef DEBUG_MODE
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        m_chunkDataGenerated++;
-        m_avgChunkDataGenTime = m_avgChunkDataGenTime + (duration.count() - m_avgChunkDataGenTime) / std::min(m_chunkDataGenerated, 1);
-        #endif
-
-        {
-            std::unique_lock<std::shared_mutex> chunkDataLock(m_chunkDataMutex);
-            m_chunkData[id] = data;
-        }
-
-        return data;
     }
 
     void ChunkManager::ChunkThread()
@@ -770,33 +809,21 @@ namespace WillowVox
                 }
 
                 // Create chunk data
-                auto data = GetOrGenerateChunkData(id);
-                std::unordered_set<glm::ivec3> chunksToRemesh;
-                chunksToRemesh = WillowVox::VoxelLighting::CalculateFullLighting(this, m_chunkData[id].get());
+                auto data = GetChunkData(id);
 
                 // Create chunk renderer
                 auto chunk = std::make_shared<ChunkRenderer>(m_chunkData[id], id);
 
                 // Set neighboring chunks
-                chunk->SetSouthData(GetOrGenerateChunkData({ id.x, id.y, id.z + 1 }));
-                chunk->SetNorthData(GetOrGenerateChunkData({ id.x, id.y, id.z - 1 }));
-                chunk->SetEastData(GetOrGenerateChunkData({ id.x + 1, id.y, id.z }));
-                chunk->SetWestData(GetOrGenerateChunkData({ id.x - 1, id.y, id.z }));
-                chunk->SetUpData(GetOrGenerateChunkData({ id.x, id.y + 1, id.z }));
-                chunk->SetDownData(GetOrGenerateChunkData({ id.x, id.y - 1, id.z }));
+                chunk->SetSouthData(GetChunkData({ id.x, id.y, id.z + 1 }));
+                chunk->SetNorthData(GetChunkData({ id.x, id.y, id.z - 1 }));
+                chunk->SetEastData(GetChunkData({ id.x + 1, id.y, id.z }));
+                chunk->SetWestData(GetChunkData({ id.x - 1, id.y, id.z }));
+                chunk->SetUpData(GetChunkData({ id.x, id.y + 1, id.z }));
+                chunk->SetDownData(GetChunkData({ id.x, id.y - 1, id.z }));
 
                 // Generate chunk mesh data
                 chunk->GenerateMesh();
-                for (auto& chunkIdToRemesh : chunksToRemesh)
-                {
-                    auto rendererToRemesh = GetChunkRenderer(chunkIdToRemesh);
-                    if (rendererToRemesh)
-                    {
-                        uint32_t currentVersion = ++rendererToRemesh->m_version;
-                        std::lock_guard<std::mutex> lock(rendererToRemesh->m_generationMutex);
-                        rendererToRemesh->GenerateMesh(currentVersion);
-                    }
-                }
 
                 // Add chunk to map
                 {

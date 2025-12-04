@@ -59,7 +59,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (ny < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, -1, 0));
                     ny += CHUNK_SIZE;
                 }
@@ -86,7 +86,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (ny >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 1, 0));
                     ny -= CHUNK_SIZE;
                 }
@@ -96,7 +96,7 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
                             targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
@@ -113,7 +113,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nx < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(-1, 0, 0));
                     nx += CHUNK_SIZE;
                 }
@@ -123,7 +123,7 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
                             targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
@@ -140,7 +140,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nx >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(1, 0, 0));
                     nx -= CHUNK_SIZE;
                 }
@@ -150,7 +150,7 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
                             targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
@@ -167,7 +167,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nz < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, -1));
                     nz += CHUNK_SIZE;
                 }
@@ -177,7 +177,7 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
                             targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
@@ -194,7 +194,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nz >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, 1));
                     nz -= CHUNK_SIZE;
                 }
@@ -204,7 +204,7 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
                             targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
@@ -226,7 +226,7 @@ namespace WillowVox::VoxelLighting
             ChunkData* targetChunk = chunkData;
             if (ny >= CHUNK_SIZE)
             {
-                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 1, 0)).get();
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 1, 0), LightingStage::ReadyForLighting).get();
                 ny -= CHUNK_SIZE;
             }
             if (targetChunk)
@@ -250,7 +250,7 @@ namespace WillowVox::VoxelLighting
             ChunkData* targetChunk = chunkData;
             if (ny < 0)
             {
-                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, -1, 0)).get();
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, -1, 0), LightingStage::ReadyForLighting).get();
                 ny += CHUNK_SIZE;
             }
             if (targetChunk)
@@ -274,7 +274,7 @@ namespace WillowVox::VoxelLighting
             ChunkData* targetChunk = chunkData;
             if (nx < 0)
             {
-                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(-1, 0, 0)).get();
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(-1, 0, 0), LightingStage::ReadyForLighting).get();
                 nx += CHUNK_SIZE;
             }
             if (targetChunk)
@@ -298,7 +298,7 @@ namespace WillowVox::VoxelLighting
             ChunkData* targetChunk = chunkData;
             if (nx >= CHUNK_SIZE)
             {
-                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(1, 0, 0)).get();
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(1, 0, 0), LightingStage::ReadyForLighting).get();
                 nx -= CHUNK_SIZE;
             }
             if (targetChunk)
@@ -322,7 +322,7 @@ namespace WillowVox::VoxelLighting
             ChunkData* targetChunk = chunkData;
             if (nz < 0)
             {
-                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, -1)).get();
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, -1), LightingStage::ReadyForLighting).get();
                 nz += CHUNK_SIZE;
             }
             if (targetChunk)
@@ -346,7 +346,7 @@ namespace WillowVox::VoxelLighting
             ChunkData* targetChunk = chunkData;
             if (nz >= CHUNK_SIZE)
             {
-                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, 1)).get();
+                targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, 1), LightingStage::ReadyForLighting).get();
                 nz -= CHUNK_SIZE;
             }
             if (targetChunk)
@@ -366,8 +366,6 @@ namespace WillowVox::VoxelLighting
 
     std::unordered_set<glm::ivec3> CalculateFullLighting(ChunkManager* chunkManager, ChunkData* chunkData)
     {
-        chunkData->ClearLight();
-
         // Create lighting queues
         std::queue<LightNode> skyLightQueue;
 
@@ -378,121 +376,14 @@ namespace WillowVox::VoxelLighting
             {
                 for (int z = 0; z < CHUNK_SIZE; ++z)
                 {
-                    // Set sky light level to maximum and enqueue
-                    chunkData->SetSkyLightLevel(x, CHUNK_SIZE - 1, z, 15);
-                    skyLightQueue.emplace(x, CHUNK_SIZE - 1, z, chunkData);
-                }
-            }
-        }
-        else
-        {
-            // Add edges of neighbors to sky light queue
-            // Positive Y
-            {
-                ChunkData* neighborChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 1, 0)).get();
-                if (neighborChunk)
-                {
-                    for (int x = 0; x < CHUNK_SIZE; ++x)
-                    {
-                        for (int z = 0; z < CHUNK_SIZE; ++z)
-                        {
-                            int neighborLightLevel = neighborChunk->GetSkyLightLevel(x, 0, z);
-                            if (neighborLightLevel > 0)
-                            {
-                                skyLightQueue.emplace(x, 0, z, neighborChunk);
-                            }
-                        }
-                    }
-                }
-            }
-            // Negative Y
-            {
-                ChunkData* neighborChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, -1, 0)).get();
-                if (neighborChunk)
-                {
-                    for (int x = 0; x < CHUNK_SIZE; ++x)
-                    {
-                        for (int z = 0; z < CHUNK_SIZE; ++z)
-                        {
-                            int neighborLightLevel = neighborChunk->GetSkyLightLevel(x, CHUNK_SIZE - 1, z);
-                            if (neighborLightLevel > 1)
-                            {
-                                skyLightQueue.emplace(x, CHUNK_SIZE - 1, z, neighborChunk);
-                            }
-                        }
-                    }
-                }
-            }
-            // Positive X
-            {
-                ChunkData* neighborChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(1, 0, 0)).get();
-                if (neighborChunk)
-                {
                     for (int y = 0; y < CHUNK_SIZE; ++y)
                     {
-                        for (int z = 0; z < CHUNK_SIZE; ++z)
-                        {
-                            int neighborLightLevel = neighborChunk->GetSkyLightLevel(0, y, z);
-                            if (neighborLightLevel > 1)
-                            {
-                                skyLightQueue.emplace(0, y, z, neighborChunk);
-                            }
-                        }
+                        // Set sky light level to maximum for all y levels
+                        chunkData->SetSkyLightLevel(x, y, z, 15);
                     }
-                }
-            }
-            // Negative X
-            {
-                ChunkData* neighborChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(-1, 0, 0)).get();
-                if (neighborChunk)
-                {
-                    for (int y = 0; y < CHUNK_SIZE; ++y)
-                    {
-                        for (int z = 0; z < CHUNK_SIZE; ++z)
-                        {
-                            int neighborLightLevel = neighborChunk->GetSkyLightLevel(CHUNK_SIZE - 1, y, z);
-                            if (neighborLightLevel > 1)
-                            {
-                                skyLightQueue.emplace(CHUNK_SIZE - 1, y, z, neighborChunk);
-                            }
-                        }
-                    }
-                }
-            }
-            // Positive Z
-            {
-                ChunkData* neighborChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, 1)).get();
-                if (neighborChunk)
-                {
-                    for (int x = 0; x < CHUNK_SIZE; ++x)
-                    {
-                        for (int y = 0; y < CHUNK_SIZE; ++y)
-                        {
-                            int neighborLightLevel = neighborChunk->GetSkyLightLevel(x, y, 0);
-                            if (neighborLightLevel > 1)
-                            {
-                                skyLightQueue.emplace(x, y, 0, neighborChunk);
-                            }
-                        }
-                    }
-                }
-            }
-            // Negative Z
-            {
-                ChunkData* neighborChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, -1)).get();
-                if (neighborChunk)
-                {
-                    for (int x = 0; x < CHUNK_SIZE; ++x)
-                    {
-                        for (int y = 0; y < CHUNK_SIZE; ++y)
-                        {
-                            int neighborLightLevel = neighborChunk->GetSkyLightLevel(x, y, CHUNK_SIZE - 1);
-                            if (neighborLightLevel > 1)
-                            {
-                                skyLightQueue.emplace(x, y, CHUNK_SIZE - 1, neighborChunk);
-                            }
-                        }
-                    }
+
+                    // Enqueue bottom block for sky light propagation
+                    skyLightQueue.emplace(x, 0, z, chunkData);
                 }
             }
         }
@@ -501,6 +392,7 @@ namespace WillowVox::VoxelLighting
         std::unordered_set<glm::ivec3> chunksToRemesh;
         PropagateSkyLight(chunkManager, skyLightQueue, chunksToRemesh);
         chunksToRemesh.insert(chunkData->id);
+
         return chunksToRemesh;
     }
 
@@ -545,7 +437,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nx < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(-1, 0, 0));
                     nx += CHUNK_SIZE;
                 }
@@ -572,7 +464,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nx >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(1, 0, 0));
                     nx -= CHUNK_SIZE;
                 }
@@ -599,7 +491,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (ny < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, -1, 0));
                     ny += CHUNK_SIZE;
                 }
@@ -626,7 +518,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (ny >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 1, 0));
                     ny -= CHUNK_SIZE;
                 }
@@ -653,7 +545,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nz < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, -1));
                     nz += CHUNK_SIZE;
                 }
@@ -680,7 +572,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nz >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, 1));
                     nz -= CHUNK_SIZE;
                 }
@@ -766,7 +658,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nx < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(-1, 0, 0));
                     nx += CHUNK_SIZE;
                 }
@@ -793,7 +685,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nx >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(1, 0, 0));
                     nx -= CHUNK_SIZE;
                 }
@@ -820,7 +712,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nz < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, -1));
                     nz += CHUNK_SIZE;
                 }
@@ -847,7 +739,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nz >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, 1));
                     nz -= CHUNK_SIZE;
                 }
@@ -874,7 +766,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (ny < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, -1, 0));
                     ny += CHUNK_SIZE;
                 }
@@ -901,7 +793,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (ny >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 1, 0));
                     ny -= CHUNK_SIZE;
                 }
@@ -966,7 +858,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nx < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(-1, 0, 0));
                     nx += CHUNK_SIZE;
                 }
@@ -993,7 +885,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nx >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(1, 0, 0));
                     nx -= CHUNK_SIZE;
                 }
@@ -1020,7 +912,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (ny < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, -1, 0));
                     ny += CHUNK_SIZE;
                 }
@@ -1047,7 +939,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (ny >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 1, 0));
                     ny -= CHUNK_SIZE;
                 }
@@ -1074,7 +966,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nz < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, -1));
                     nz += CHUNK_SIZE;
                 }
@@ -1101,7 +993,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = currentChunk;
                 if (nz >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1)).get();
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1), LightingStage::ReadyForLighting).get();
                     chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, 1));
                     nz -= CHUNK_SIZE;
                 }
@@ -1170,7 +1062,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = chunkData;
                 if (nx < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(-1, 0, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(-1, 0, 0), LightingStage::ReadyForLighting).get();
                     nx += CHUNK_SIZE;
                 }
                 if (targetChunk)
@@ -1194,7 +1086,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = chunkData;
                 if (nx >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(1, 0, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(1, 0, 0), LightingStage::ReadyForLighting).get();
                     nx -= CHUNK_SIZE;
                 }
                 if (targetChunk)
@@ -1218,7 +1110,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = chunkData;
                 if (ny < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, -1, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, -1, 0), LightingStage::ReadyForLighting).get();
                     ny += CHUNK_SIZE;
                 }
                 if (targetChunk)
@@ -1242,7 +1134,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = chunkData;
                 if (ny >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 1, 0)).get();
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 1, 0), LightingStage::ReadyForLighting).get();
                     ny -= CHUNK_SIZE;
                 }
                 if (targetChunk)
@@ -1266,7 +1158,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = chunkData;
                 if (nz < 0)
                 {
-                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, -1)).get();
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, -1), LightingStage::ReadyForLighting).get();
                     nz += CHUNK_SIZE;
                 }
                 if (targetChunk)
@@ -1290,7 +1182,7 @@ namespace WillowVox::VoxelLighting
                 ChunkData* targetChunk = chunkData;
                 if (nz >= CHUNK_SIZE)
                 {
-                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, 1)).get();
+                    targetChunk = chunkManager->GetChunkData(chunkData->id + glm::ivec3(0, 0, 1), LightingStage::ReadyForLighting).get();
                     nz -= CHUNK_SIZE;
                 }
                 if (targetChunk)

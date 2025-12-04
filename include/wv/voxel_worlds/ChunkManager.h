@@ -18,9 +18,12 @@ namespace WillowVox
         ChunkManager(WorldGen* worldGen, int numChunkThreads, int worldSizeX = 0, int worldMinY = 0, int worldMaxY = 0, int worldSizeZ = 0);
         ~ChunkManager();
 
-        std::shared_ptr<ChunkData> GetChunkData(int x, int y, int z);
-        std::shared_ptr<ChunkData> GetChunkData(const glm::ivec3& id);
-        std::shared_ptr<ChunkData> GetChunkDataAtPos(float x, float y, float z);
+        std::shared_ptr<ChunkData> GetChunkData(int x, int y, int z, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
+        std::shared_ptr<ChunkData> GetChunkData(const glm::ivec3& id, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
+        std::shared_ptr<ChunkData> GetChunkDataAtPos(float x, float y, float z, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
+        std::shared_ptr<ChunkData> TryGetChunkData(int x, int y, int z, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
+        std::shared_ptr<ChunkData> TryGetChunkData(const glm::ivec3& id, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
+        std::shared_ptr<ChunkData> TryGetChunkDataAtPos(float x, float y, float z, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
 
         std::shared_ptr<ChunkRenderer> GetChunkRenderer(int x, int y, int z);
         std::shared_ptr<ChunkRenderer> GetChunkRenderer(const glm::ivec3& id);
