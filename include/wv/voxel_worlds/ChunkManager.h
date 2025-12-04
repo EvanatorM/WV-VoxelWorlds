@@ -18,11 +18,34 @@ namespace WillowVox
         ChunkManager(WorldGen* worldGen, int numChunkThreads, int worldSizeX = 0, int worldMinY = 0, int worldMaxY = 0, int worldSizeZ = 0);
         ~ChunkManager();
 
+        // Gets chunk data at the specified chunk ID
+        // If the chunk data does not exist, it will be generated
+        // It is recommended to use TryGetChunkData when possible
+        // as generation is slow and can freeze the current thread
         std::shared_ptr<ChunkData> GetChunkData(int x, int y, int z, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
+        
+        // Gets chunk data at the specified chunk ID
+        // If the chunk data does not exist, it will be generated
+        // It is recommended to use TryGetChunkData when possible
+        // as generation is slow and can freeze the current thread
         std::shared_ptr<ChunkData> GetChunkData(const glm::ivec3& id, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
+        
+        // Gets chunk data at the specified world position
+        // If the chunk data does not exist, it will be generated
+        // It is recommended to use TryGetChunkData when possible
+        // as generation is slow and can freeze the current thread
         std::shared_ptr<ChunkData> GetChunkDataAtPos(float x, float y, float z, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
+
+        // Gets chunk data at the specified chunk ID
+        // If the chunk data does not exist, nullptr is returned
         std::shared_ptr<ChunkData> TryGetChunkData(int x, int y, int z, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
+        
+        // Gets chunk data at the specified chunk ID
+        // If the chunk data does not exist, nullptr is returned
         std::shared_ptr<ChunkData> TryGetChunkData(const glm::ivec3& id, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
+        
+        // Gets chunk data at the specified world position
+        // If the chunk data does not exist, nullptr is returned
         std::shared_ptr<ChunkData> TryGetChunkDataAtPos(float x, float y, float z, LightingStage requiredLightingStage = LightingStage::LocalLightCalculated, uint8_t requiredWorldGenStage = 0);
 
         std::shared_ptr<ChunkRenderer> GetChunkRenderer(int x, int y, int z);
