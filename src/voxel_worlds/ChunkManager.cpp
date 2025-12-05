@@ -279,6 +279,16 @@ namespace WillowVox
         }, priority);
     }
 
+    inline void StartSaveChunkJob(ThreadPool& pool, std::shared_ptr<ChunkData> chunkData, Priority priority = Priority::Medium)
+    {
+        if (!chunkData)
+            return;
+
+        pool.Enqueue([chunkData] {
+            ChunkManager::SaveChunkDataToFile(chunkData, SAVE_PATH);
+        }, priority);
+    }
+
     void ChunkManager::SetBlockId(float x, float y, float z, BlockId blockId)
     {
         auto chunkId = WorldToChunkId(x, y, z);
@@ -766,6 +776,7 @@ namespace WillowVox
                                 m_chunkRenderers.find({ id.x, id.y, id.z - 1 }) == m_chunkRenderers.end())
                             {
                                 chunkDataToDelete.push_back(id);
+                                break;
                             }
                         }
                     }
@@ -777,6 +788,7 @@ namespace WillowVox
                             auto chunkData = GetChunkData(id);
                             if (chunkData)
                             {
+                                //StartSaveChunkJob(m_chunkThreadPool, chunkData, Priority::Low);
                                 SaveChunkDataToFile(chunkData, SAVE_PATH);
                             }
                         }

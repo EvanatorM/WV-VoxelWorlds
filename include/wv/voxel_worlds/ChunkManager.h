@@ -103,8 +103,8 @@ namespace WillowVox
                      z - (id.z * CHUNK_SIZE) };
         }
 
-        void SaveChunkDataToFile(std::shared_ptr<ChunkData> chunk, const std::string& savePath);
-        std::shared_ptr<ChunkData> LoadChunkDataFromFile(const glm::ivec3& id, const std::string& savePath);
+        static void SaveChunkDataToFile(std::shared_ptr<ChunkData> chunk, const std::string& savePath);
+        static std::shared_ptr<ChunkData> LoadChunkDataFromFile(const glm::ivec3& id, const std::string& savePath);
 
 #ifdef DEBUG_MODE
         float m_avgChunkDataGenTime = 0.0f;
