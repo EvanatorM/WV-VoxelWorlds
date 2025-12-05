@@ -776,7 +776,7 @@ namespace WillowVox
                                 m_chunkRenderers.find({ id.x, id.y, id.z - 1 }) == m_chunkRenderers.end())
                             {
                                 chunkDataToDelete.push_back(id);
-                                break;
+                                break; // Only delete one chunk at a time for now to load new chunks faster (this is a temporary solution)
                             }
                         }
                     }
@@ -788,7 +788,6 @@ namespace WillowVox
                             auto chunkData = GetChunkData(id);
                             if (chunkData)
                             {
-                                //StartSaveChunkJob(m_chunkThreadPool, chunkData, Priority::Low);
                                 SaveChunkDataToFile(chunkData, SAVE_PATH);
                             }
                         }
