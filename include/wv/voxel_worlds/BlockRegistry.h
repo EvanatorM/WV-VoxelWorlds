@@ -17,11 +17,11 @@ namespace WillowVox
         }
 
         void RegisterBlock(const std::string& strId, const std::string& texturePath,
-            bool lightEmitter = false, int lightLevel = 16);
+            bool lightEmitter = false, int lightLevel = 15);
         void RegisterBlock(const std::string& strId, const std::string& topTexturePath,
             const std::string& bottomTexturePath,
             const std::string& sideTexturePath,
-            bool lightEmitter = false, int lightLevel = 16);
+            bool lightEmitter = false, int lightLevel = 15);
 
         void ApplyRegistry();
 
