@@ -117,17 +117,17 @@ namespace WillowVox
         }, priority);
     }
 
-    inline void StartLightAddJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, int lightLevel, Priority priority = Priority::Medium)
+    inline void StartLightAddJob(ThreadPool& pool, ChunkManager& chunkManager, std::shared_ptr<ChunkData> chunkData, int x, int y, int z, int redLight, int greenLight, int blueLight, Priority priority = Priority::Medium)
     {
         if (!chunkData)
             return;
 
         std::weak_ptr<ChunkData> weakChunkDataPtr = chunkData;
-        pool.Enqueue([&chunkManager, weakChunkDataPtr, x, y, z, lightLevel] {
+        pool.Enqueue([&chunkManager, weakChunkDataPtr, x, y, z, redLight, greenLight, blueLight] {
             if (auto chunkDataPtr = weakChunkDataPtr.lock())
             {
                 std::lock_guard<std::mutex> lock(WillowVox::VoxelLighting::lightingMutex);
-                auto chunksToRemesh = WillowVox::VoxelLighting::AddLightEmitter(&chunkManager, chunkDataPtr.get(), x, y, z, lightLevel);
+                auto chunksToRemesh = WillowVox::VoxelLighting::AddLightEmitter(&chunkManager, chunkDataPtr.get(), x, y, z, redLight, greenLight, blueLight);
 
                 // Remesh affected chunks
                 for (auto& chunkId : chunksToRemesh)
@@ -345,7 +345,7 @@ namespace WillowVox
             // Handle lighting updates
             if (block.lightEmitter)
             {
-                StartLightAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, block.lightLevel, Priority::High);
+                StartLightAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, block.redLight, block.greenLight, block.blueLight, Priority::High);
                 StartSkyLightBlockerAddJob(m_chunkThreadPool, *this, chunk, localPos.x, localPos.y, localPos.z, Priority::High);
             }
             else if (blockId == 0)
@@ -546,9 +546,8 @@ namespace WillowVox
     {
         // File Format:
         // [2 bytes] Version number (uint16_t)
-        // [CHUNK_VOLUME bytes] BlockId array
-        // [CHUNK_VOLUME bytes] Light level array
-        // [CHUNK_VOLUME bytes] Sky light level array
+        // [CHUNK_VOLUME bytes] BlockIds
+        // [CHUNK_VOLUME bytes] Light levels
         // [1 byte ] World generation stage (uint8_t)
         // [1 byte ] Lighting stage (uint8_t)
 
@@ -564,8 +563,7 @@ namespace WillowVox
         {
             outFile.write(reinterpret_cast<const char*>(&CHUNK_DATA_VERSION), sizeof(CHUNK_DATA_VERSION));
             outFile.write(reinterpret_cast<const char*>(chunk->voxels), sizeof(chunk->voxels));
-            outFile.write(reinterpret_cast<const char*>(chunk->lightLevels), sizeof(chunk->lightLevels));
-            outFile.write(reinterpret_cast<const char*>(chunk->skyLightLevels), sizeof(chunk->skyLightLevels));
+            outFile.write(reinterpret_cast<const char*>(chunk->lightData), sizeof(chunk->lightData));
             outFile.write(reinterpret_cast<const char*>(&chunk->worldGenStage), sizeof(chunk->worldGenStage));
             uint8_t lightingStage = static_cast<uint8_t>(chunk->lightingStage);
             outFile.write(reinterpret_cast<const char*>(&lightingStage), sizeof(lightingStage));
@@ -581,9 +579,8 @@ namespace WillowVox
     {
         // File Format:
         // [2 bytes] Version number (uint16_t)
-        // [CHUNK_VOLUME bytes] BlockId array
-        // [CHUNK_VOLUME bytes] Light level array
-        // [CHUNK_VOLUME bytes] Sky light level array
+        // [CHUNK_VOLUME bytes] BlockIds
+        // [CHUNK_VOLUME bytes] Light levels
         // [1 byte ] World generation stage (uint8_t)
         // [1 byte ] Lighting stage (uint8_t)
 
@@ -608,8 +605,7 @@ namespace WillowVox
 
             auto chunkData = std::make_shared<ChunkData>(id);
             inFile.read(reinterpret_cast<char*>(chunkData->voxels), sizeof(chunkData->voxels));
-            inFile.read(reinterpret_cast<char*>(chunkData->lightLevels), sizeof(chunkData->lightLevels));
-            inFile.read(reinterpret_cast<char*>(chunkData->skyLightLevels), sizeof(chunkData->skyLightLevels));
+            inFile.read(reinterpret_cast<char*>(chunkData->lightData), sizeof(chunkData->lightData));
             inFile.read(reinterpret_cast<char*>(&chunkData->worldGenStage), sizeof(chunkData->worldGenStage));
             uint8_t lightingStage;
             inFile.read(reinterpret_cast<char*>(&lightingStage), sizeof(lightingStage));

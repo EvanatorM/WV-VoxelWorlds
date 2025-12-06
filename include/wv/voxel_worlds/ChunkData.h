@@ -57,56 +57,76 @@ namespace WillowVox
             voxels[Index(x, y, z)] = value;
         }
 
-        inline void ClearLight() noexcept
-        {
-            for (auto& v : lightLevels)
-                v = 0;
-            for (auto& v : skyLightLevels)
-                v = 0;
-        }
-
-        inline void ClearBlocks() noexcept
+        inline void Clear() noexcept
         {
             for (auto& v : voxels)
                 v = 0;
+            for (auto& v : lightData)
+                v = 0;
         }
 
-        inline void Clear() noexcept
-        {
-            ClearBlocks();
-            ClearLight();
-        }
-
-        inline int GetLightLevel(int x, int y, int z) const noexcept
+        inline int GetSkyLight(int x, int y, int z) const noexcept
         {
             assert(InBounds(x, y, z));
-            return lightLevels[Index(x, y, z)];
+            return (lightData[Index(x, y, z)] >> 12) & 0x0F;
         }
 
-        inline void SetLightLevel(int x, int y, int z, int value) noexcept
+        inline void SetSkyLight(int x, int y, int z, int value) noexcept
         {
             assert(InBounds(x, y, z));
-            lightLevels[Index(x, y, z)] = value;
+            int index = Index(x, y, z);
+            lightData[index] = (lightData[index] & 0x0FFF) | (value << 12);
         }
 
-        inline int GetSkyLightLevel(int x, int y, int z) const noexcept
+        inline int GetRedLight(int x, int y, int z) const noexcept
         {
             assert(InBounds(x, y, z));
-            return skyLightLevels[Index(x, y, z)];
+            return (lightData[Index(x, y, z)] >> 8) & 0x0F;
         }
 
-        inline void SetSkyLightLevel(int x, int y, int z, int value) noexcept
+        inline void SetRedLight(int x, int y, int z, int value) noexcept
         {
             assert(InBounds(x, y, z));
-            skyLightLevels[Index(x, y, z)] = value;
+            int index = Index(x, y, z);
+            lightData[index] = (lightData[index] & 0xF0FF) | (value << 8);
+        }
+
+        inline int GetGreenLight(int x, int y, int z) const noexcept
+        {
+            assert(InBounds(x, y, z));
+            return (lightData[Index(x, y, z)] >> 4) & 0x0F;
+        }
+
+        inline void SetGreenLight(int x, int y, int z, int value) noexcept
+        {
+            assert(InBounds(x, y, z));
+            int index = Index(x, y, z);
+            lightData[index] = (lightData[index] & 0xFF0F) | (value << 4);
+        }
+
+        inline int GetBlueLight(int x, int y, int z) const noexcept
+        {
+            assert(InBounds(x, y, z));
+            return lightData[Index(x, y, z)] & 0x0F;
+        }
+
+        inline void SetBlueLight(int x, int y, int z, int value) noexcept
+        {
+            assert(InBounds(x, y, z));
+            int index = Index(x, y, z);
+            lightData[index] = (lightData[index] & 0xFFF0) | (value);
+        }
+
+        inline uint16_t GetLightData(int x, int y, int z) noexcept
+        {
+            assert(InBounds(x, y, z));
+            return lightData[Index(x, y, z)];
         }
 
         // Block data
         BlockId voxels[CHUNK_VOLUME];
-
-        // Light data
-        int lightLevels[CHUNK_VOLUME];
-        int skyLightLevels[CHUNK_VOLUME];
+        // Light data (SSSS RRRR GGGG BBBB)
+        uint16_t lightData[CHUNK_VOLUME];
 
         // To be used by client-implemented world generation functions
         uint8_t worldGenStage = 0;

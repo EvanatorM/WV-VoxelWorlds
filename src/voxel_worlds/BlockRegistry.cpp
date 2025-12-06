@@ -9,7 +9,7 @@ namespace WillowVox
     }
 
     void BlockRegistry::RegisterBlock(const std::string& strId, const std::string& texturePath,
-        bool lightEmitter, int lightLevel)
+        bool lightEmitter, int redLight, int greenLight, int blueLight)
     {
         // Get texture id if exists or add to texture map if not
         int texId;
@@ -23,13 +23,13 @@ namespace WillowVox
             texId = it->second;
 
         // Set the temp block def texture to texture id
-        m_tempBlockRegistry[strId] = { texId, texId, texId, lightEmitter, lightLevel, ++m_idCounter };
+        m_tempBlockRegistry[strId] = { texId, texId, texId, lightEmitter, redLight, greenLight, blueLight, ++m_idCounter };
     }
 
     void BlockRegistry::RegisterBlock(const std::string& strId, const std::string& topTexturePath,
         const std::string& bottomTexturePath,
         const std::string& sideTexturePath,
-        bool lightEmitter, int lightLevel)
+        bool lightEmitter, int redLight, int greenLight, int blueLight)
     {
         // Get texture id if exists or add to texture map if not
         int topTexId, bottomTexId, sideTexId;
@@ -65,7 +65,7 @@ namespace WillowVox
         }
 
         // Set the temp block def texture to texture id
-        m_tempBlockRegistry[strId] = { topTexId, bottomTexId, sideTexId, lightEmitter, lightLevel, ++m_idCounter };
+        m_tempBlockRegistry[strId] = { topTexId, bottomTexId, sideTexId, lightEmitter, redLight, greenLight, blueLight, ++m_idCounter };
     }
 
     void BlockRegistry::ApplyRegistry()
@@ -152,7 +152,7 @@ namespace WillowVox
                 topPos.x, topPos.z, topPos.y, topPos.w,
                 bottomPos.x, bottomPos.z, bottomPos.y, bottomPos.w,
                 sidePos.x, sidePos.z, sidePos.y, sidePos.w,
-                tex.lightEmitter, tex.lightLevel
+                tex.lightEmitter, tex.redLight, tex.greenLight, tex.blueLight
             );
             m_blocks[tex.id] = block;
             m_strIdToNumId[strId] = tex.id;

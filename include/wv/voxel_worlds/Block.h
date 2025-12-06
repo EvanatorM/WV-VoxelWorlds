@@ -9,22 +9,22 @@ namespace WillowVox
     {
         Block() = default;
         Block(const std::string& strId, BlockId id, float texMinX, float texMaxX, float texMinY, float texMaxY, 
-            bool lightEmitter = false, int lightLevel = 16)
+            bool lightEmitter = false, int redLight = 15, int greenLight = 15, int blueLight = 15)
             : strId(strId), id(id), topTexMinX(texMinX), topTexMaxX(texMaxX), topTexMinY(texMinY), topTexMaxY(texMaxY),
             bottomTexMinX(texMinX), bottomTexMaxX(texMaxX), bottomTexMinY(texMinY), bottomTexMaxY(texMaxY),
             sideTexMinX(texMinX), sideTexMaxX(texMaxX), sideTexMinY(texMinY), sideTexMaxY(texMaxY),
-            lightEmitter(lightEmitter), lightLevel(lightLevel) {
+            lightEmitter(lightEmitter), redLight(redLight), greenLight(greenLight), blueLight(blueLight) {
         }
         
 
         Block(const std::string& strId, BlockId id, float topTexMinX, float topTexMaxX, float topTexMinY, float topTexMaxY,
             float bottomTexMinX, float bottomTexMaxX, float bottomTexMinY, float bottomTexMaxY,
             float sideTexMinX, float sideTexMaxX, float sideTexMinY, float sideTexMaxY,
-            bool lightEmitter = false, int lightLevel = 16)
+            bool lightEmitter = false, int redLight = 15, int greenLight = 15, int blueLight = 15)
             : strId(strId), id(id), topTexMinX(topTexMinX), topTexMaxX(topTexMaxX), topTexMinY(topTexMinY), topTexMaxY(topTexMaxY),
             bottomTexMinX(bottomTexMinX), bottomTexMaxX(bottomTexMaxX), bottomTexMinY(bottomTexMinY), bottomTexMaxY(bottomTexMaxY),
             sideTexMinX(sideTexMinX), sideTexMaxX(sideTexMaxX), sideTexMinY(sideTexMinY), sideTexMaxY(sideTexMaxY),
-            lightEmitter(lightEmitter), lightLevel(lightLevel) {
+            lightEmitter(lightEmitter), redLight(redLight), greenLight(greenLight), blueLight(blueLight) {
         }
 
         float topTexMinX, topTexMaxX, topTexMinY, topTexMaxY;
@@ -34,6 +34,6 @@ namespace WillowVox
         BlockId id;
 
         bool lightEmitter;
-        int lightLevel;
+        int redLight, greenLight, blueLight;
     };
 }

@@ -30,8 +30,7 @@ namespace WillowVox
             m_vao->SetAttribPointer(0, 3, VertexBufferAttribType::FLOAT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, pos));
             m_vao->SetAttribPointer(1, 3, VertexBufferAttribType::FLOAT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, normal));
             m_vao->SetAttribPointer(2, 2, VertexBufferAttribType::FLOAT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, texPos));
-            m_vao->SetAttribPointer(3, 1, VertexBufferAttribType::INT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, lightLevel));
-            m_vao->SetAttribPointer(4, 1, VertexBufferAttribType::INT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, skylightLevel));
+            m_vao->SetAttribPointer(3, 1, VertexBufferAttribType::UINT16, false, sizeof(ChunkVertex), offsetof(ChunkVertex, lightData));
         }
 
         // Buffer data is dirty
@@ -108,33 +107,22 @@ namespace WillowVox
                             south = m_chunkData->Get(x, y, z + 1) == 0;
                         if (south)
                         {
-                            int lightLevel;
+                            uint16_t lightData;
                             if (z + 1 >= CHUNK_SIZE)
                             {
                                 if (m_southChunkData)
-                                    lightLevel = m_southChunkData->GetLightLevel(x, y, 0);
+                                    lightData = m_southChunkData->GetLightData(x, y, 0);
                                 else
-                                    lightLevel = 0;
+                                    lightData = 0;
                             }
                             else
-                                lightLevel = m_chunkData->GetLightLevel(x, y, z + 1);
-
-                            int skyLightLevel;
-                            if (z + 1 >= CHUNK_SIZE)
-                            {
-                                if (m_southChunkData)
-                                    skyLightLevel = m_southChunkData->GetSkyLightLevel(x, y, 0);
-                                else
-                                    skyLightLevel = 0;
-                            }
-                            else
-                                skyLightLevel = m_chunkData->GetSkyLightLevel(x, y, z + 1);
+                                lightData = m_chunkData->GetLightData(x, y, z + 1);
 
                             // South Face
-                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 0, 0, 1 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { 0, 0, 1 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel, skyLightLevel });
+                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMinX, block.sideTexMinY }, lightData });
+                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMaxX, block.sideTexMinY }, lightData });
+                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 0, 0, 1 }, { block.sideTexMinX, block.sideTexMaxY }, lightData });
+                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { 0, 0, 1 }, { block.sideTexMaxX, block.sideTexMaxY }, lightData });
 
                             AddIndices(indices, vertexCount);
                         }
@@ -154,33 +142,22 @@ namespace WillowVox
                             north = m_chunkData->Get(x, y, z - 1) == 0;
                         if (north)
                         {
-                            int lightLevel;
+                            uint16_t lightData;
                             if (z < 1)
                             {
                                 if (m_northChunkData)
-                                    lightLevel = m_northChunkData->GetLightLevel(x, y, CHUNK_SIZE - 1);
+                                    lightData = m_northChunkData->GetLightData(x, y, CHUNK_SIZE - 1);
                                 else
-                                    lightLevel = 0;
+                                    lightData = 0;
                             }
                             else
-                                lightLevel = m_chunkData->GetLightLevel(x, y, z - 1);
-
-                            int skyLightLevel;
-                            if (z < 1)
-                            {
-                                if (m_northChunkData)
-                                    skyLightLevel = m_northChunkData->GetSkyLightLevel(x, y, CHUNK_SIZE - 1);
-                                else
-                                    skyLightLevel = 0;
-                            }
-                            else
-                                skyLightLevel = m_chunkData->GetSkyLightLevel(x, y, z - 1);
+                                lightData = m_chunkData->GetLightData(x, y, z - 1);
 
                             // North Face
-                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { 0, 0, -1 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 0, 0, -1 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel, skyLightLevel });
+                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMinX, block.sideTexMinY }, lightData });
+                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMaxX, block.sideTexMinY }, lightData });
+                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { 0, 0, -1 }, { block.sideTexMinX, block.sideTexMaxY }, lightData });
+                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 0, 0, -1 }, { block.sideTexMaxX, block.sideTexMaxY }, lightData });
 
                             AddIndices(indices, vertexCount);
                         }
@@ -199,33 +176,22 @@ namespace WillowVox
                             east = m_chunkData->Get(x + 1, y, z) == 0;
                         if (east)
                         {
-                            int lightLevel;
+                            uint16_t lightData;
                             if (x + 1 >= CHUNK_SIZE)
                             {
                                 if (m_eastChunkData)
-                                    lightLevel = m_eastChunkData->GetLightLevel(0, y, z);
+                                    lightData = m_eastChunkData->GetLightData(0, y, z);
                                 else
-                                    lightLevel = 0;
+                                    lightData = 0;
                             }
                             else
-                                lightLevel = m_chunkData->GetLightLevel(x + 1, y, z);
-
-                            int skyLightLevel;
-                            if (x + 1 >= CHUNK_SIZE)
-                            {
-                                if (m_eastChunkData)
-                                    skyLightLevel = m_eastChunkData->GetSkyLightLevel(0, y, z);
-                                else
-                                    skyLightLevel = 0;
-                            }
-                            else
-                                skyLightLevel = m_chunkData->GetSkyLightLevel(x + 1, y, z);
+                                lightData = m_chunkData->GetLightData(x + 1, y, z);
 
                             // East Face
-                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { -1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { -1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { -1, 0, 0 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { -1, 0, 0 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel, skyLightLevel });
+                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { -1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightData });
+                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { -1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightData });
+                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { -1, 0, 0 }, { block.sideTexMinX, block.sideTexMaxY }, lightData });
+                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { -1, 0, 0 }, { block.sideTexMaxX, block.sideTexMaxY }, lightData });
 
                             AddIndices(indices, vertexCount);
                         }
@@ -244,33 +210,22 @@ namespace WillowVox
                             west = m_chunkData->Get(x - 1, y, z) == 0;
                         if (west)
                         {
-                            int lightLevel;
+                            uint16_t lightData;
                             if (x < 1)
                             {
                                 if (m_westChunkData)
-                                    lightLevel = m_westChunkData->GetLightLevel(CHUNK_SIZE - 1, y, z);
+                                    lightData = m_westChunkData->GetLightData(CHUNK_SIZE - 1, y, z);
                                 else
-                                    lightLevel = 0;
+                                    lightData = 0;
                             }
                             else
-                                lightLevel = m_chunkData->GetLightLevel(x - 1, y, z);
-
-                            int skyLightLevel;
-                            if (x < 1)
-                            {
-                                if (m_westChunkData)
-                                    skyLightLevel = m_westChunkData->GetSkyLightLevel(CHUNK_SIZE - 1, y, z);
-                                else
-                                    skyLightLevel = 0;
-                            }
-                            else
-                                skyLightLevel = m_chunkData->GetSkyLightLevel(x - 1, y, z);
+                                lightData = m_chunkData->GetLightData(x - 1, y, z);
 
                             // West Face
-                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 1, 0, 0 }, { block.sideTexMinX, block.sideTexMaxY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 1, 0, 0 }, { block.sideTexMaxX, block.sideTexMaxY }, lightLevel, skyLightLevel });
+                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightData });
+                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightData });
+                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 1, 0, 0 }, { block.sideTexMinX, block.sideTexMaxY }, lightData });
+                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 1, 0, 0 }, { block.sideTexMaxX, block.sideTexMaxY }, lightData });
 
                             AddIndices(indices, vertexCount);
                         }
@@ -289,33 +244,22 @@ namespace WillowVox
                             up = m_chunkData->Get(x, y + 1, z) == 0;
                         if (up)
                         {
-                            int lightLevel;
+                            uint16_t lightData;
                             if (y + 1 >= CHUNK_SIZE)
                             {
                                 if (m_upChunkData)
-                                    lightLevel = m_upChunkData->GetLightLevel(x, 0, z);
+                                    lightData = m_upChunkData->GetLightData(x, 0, z);
                                 else
-                                    lightLevel = 0;
+                                    lightData = 0;
                             }
                             else
-                                lightLevel = m_chunkData->GetLightLevel(x, y + 1, z);
-
-                            int skyLightLevel;
-                            if (y + 1 >= CHUNK_SIZE)
-                            {
-                                if (m_upChunkData)
-                                    skyLightLevel = m_upChunkData->GetSkyLightLevel(x, 0, z);
-                                else
-                                    skyLightLevel = 0;
-                            }
-                            else
-                                skyLightLevel = m_chunkData->GetSkyLightLevel(x, y + 1, z);
+                                lightData = m_chunkData->GetLightData(x, y + 1, z);
 
                             // Up Face
-                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMinX, block.topTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMaxX, block.topTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 0, 1, 0 }, { block.topTexMinX, block.topTexMaxY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { 0, 1, 0 }, { block.topTexMaxX, block.topTexMaxY }, lightLevel, skyLightLevel });
+                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMinX, block.topTexMinY }, lightData });
+                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMaxX, block.topTexMinY }, lightData });
+                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 0, 1, 0 }, { block.topTexMinX, block.topTexMaxY }, lightData });
+                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { 0, 1, 0 }, { block.topTexMaxX, block.topTexMaxY }, lightData });
 
                             AddIndices(indices, vertexCount);
                         }
@@ -334,33 +278,22 @@ namespace WillowVox
                             down = m_chunkData->Get(x, y - 1, z) == 0;
                         if (down)
                         {
-                            int lightLevel;
+                            uint16_t lightData;
                             if (y < 1)
                             {
                                 if (m_downChunkData)
-                                    lightLevel = m_downChunkData->GetLightLevel(x, CHUNK_SIZE - 1, z);
+                                    lightData = m_downChunkData->GetLightData(x, CHUNK_SIZE - 1, z);
                                 else
-                                    lightLevel = 0;
+                                    lightData = 0;
                             }
                             else
-                                lightLevel = m_chunkData->GetLightLevel(x, y - 1, z);
-
-                            int skyLightLevel;                            
-                            if (y < 1)
-                            {
-                                if (m_downChunkData)
-                                    skyLightLevel = m_downChunkData->GetSkyLightLevel(x, CHUNK_SIZE - 1, z);
-                                else
-                                    skyLightLevel = 0;
-                            }
-                            else
-                                skyLightLevel = m_chunkData->GetSkyLightLevel(x, y - 1, z);
+                                lightData = m_chunkData->GetLightData(x, y - 1, z);
 
                             // Down Face
-                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMinX, block.bottomTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMaxX, block.bottomTexMinY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { 0, -1, 0 }, { block.bottomTexMinX, block.bottomTexMaxY }, lightLevel, skyLightLevel });
-                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 0, -1, 0 }, { block.bottomTexMaxX, block.bottomTexMaxY }, lightLevel, skyLightLevel });
+                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMinX, block.bottomTexMinY }, lightData });
+                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMaxX, block.bottomTexMinY }, lightData });
+                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { 0, -1, 0 }, { block.bottomTexMinX, block.bottomTexMaxY }, lightData });
+                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 0, -1, 0 }, { block.bottomTexMaxX, block.bottomTexMaxY }, lightData });
 
                             AddIndices(indices, vertexCount);
                         }

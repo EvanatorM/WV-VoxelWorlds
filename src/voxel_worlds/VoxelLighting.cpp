@@ -44,7 +44,7 @@ namespace WillowVox::VoxelLighting
             ChunkData* currentChunk = node.chunk;
             sunlightQueue.pop();
 
-            int skyLightLevel = currentChunk->GetSkyLightLevel(x, y, z);
+            int skyLightLevel = currentChunk->GetSkyLight(x, y, z);
             //Logger::Log("Skylight queue size: %d. Current light level: %d. X: %d, Y: %d, Z: %d", (int)sunlightQueue.size(), skyLightLevel, x, y, z);
 
             if (skyLightLevel == 0)
@@ -69,10 +69,10 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 1 <= skyLightLevel)
+                        if (targetChunk->GetSkyLight(nx, ny, nz) + 1 <= skyLightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel);
+                            targetChunk->SetSkyLight(nx, ny, nz, skyLightLevel);
                             sunlightQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
@@ -96,10 +96,10 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
+                        if (targetChunk->GetSkyLight(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
+                            targetChunk->SetSkyLight(nx, ny, nz, skyLightLevel - 1);
                             sunlightQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
@@ -123,10 +123,10 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
+                        if (targetChunk->GetSkyLight(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
+                            targetChunk->SetSkyLight(nx, ny, nz, skyLightLevel - 1);
                             sunlightQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
@@ -150,10 +150,10 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
+                        if (targetChunk->GetSkyLight(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
+                            targetChunk->SetSkyLight(nx, ny, nz, skyLightLevel - 1);
                             sunlightQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
@@ -177,10 +177,10 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
+                        if (targetChunk->GetSkyLight(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
+                            targetChunk->SetSkyLight(nx, ny, nz, skyLightLevel - 1);
                             sunlightQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
@@ -204,10 +204,10 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated
-                        if (targetChunk->GetSkyLightLevel(nx, ny, nz) + 2 <= skyLightLevel)
+                        if (targetChunk->GetSkyLight(nx, ny, nz) + 2 <= skyLightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetSkyLightLevel(nx, ny, nz, skyLightLevel - 1);
+                            targetChunk->SetSkyLight(nx, ny, nz, skyLightLevel - 1);
                             sunlightQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
@@ -231,7 +231,7 @@ namespace WillowVox::VoxelLighting
             }
             if (targetChunk)
             {
-                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                 if (neighborLightLevel > outLevel)
                 {
                     outLevel = neighborLightLevel;
@@ -255,7 +255,7 @@ namespace WillowVox::VoxelLighting
             }
             if (targetChunk)
             {
-                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                 if (neighborLightLevel > outLevel)
                 {
                     outLevel = neighborLightLevel;
@@ -279,7 +279,7 @@ namespace WillowVox::VoxelLighting
             }
             if (targetChunk)
             {
-                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                 if (neighborLightLevel > outLevel)
                 {
                     outLevel = neighborLightLevel;
@@ -303,7 +303,7 @@ namespace WillowVox::VoxelLighting
             }
             if (targetChunk)
             {
-                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                 if (neighborLightLevel > outLevel)
                 {
                     outLevel = neighborLightLevel;
@@ -327,7 +327,7 @@ namespace WillowVox::VoxelLighting
             }
             if (targetChunk)
             {
-                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                 if (neighborLightLevel > outLevel)
                 {
                     outLevel = neighborLightLevel;
@@ -351,7 +351,7 @@ namespace WillowVox::VoxelLighting
             }
             if (targetChunk)
             {
-                int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                 if (neighborLightLevel > outLevel)
                 {
                     outLevel = neighborLightLevel;
@@ -379,7 +379,7 @@ namespace WillowVox::VoxelLighting
                     for (int y = 0; y < CHUNK_SIZE; ++y)
                     {
                         // Set sky light level to maximum for all y levels
-                        chunkData->SetSkyLightLevel(x, y, z, 15);
+                        chunkData->SetSkyLight(x, y, z, 15);
                     }
 
                     // Enqueue bottom block for sky light propagation
@@ -407,10 +407,10 @@ namespace WillowVox::VoxelLighting
         std::queue<LightNode> lightPropagationQueue;
 
         // Set initial light level and enqueue
-        int lightLevel = chunkData->GetSkyLightLevel(x, y, z);
+        int lightLevel = chunkData->GetSkyLight(x, y, z);
         lightRemovalQueue.emplace(x, y, z, chunkData, lightLevel);
 
-        chunkData->SetSkyLightLevel(x, y, z, 0);
+        chunkData->SetSkyLight(x, y, z, 0);
 
         // BFS for light removal
         while (!lightRemovalQueue.empty())
@@ -443,10 +443,10 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
                     {
-                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        targetChunk->SetSkyLight(nx, ny, nz, 0);
                         lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel >= lightLevel)
@@ -470,10 +470,10 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
                     {
-                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        targetChunk->SetSkyLight(nx, ny, nz, 0);
                         lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel >= lightLevel)
@@ -497,10 +497,10 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel <= lightLevel)
                     {
-                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        targetChunk->SetSkyLight(nx, ny, nz, 0);
                         lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel > lightLevel)
@@ -524,10 +524,10 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
                     {
-                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        targetChunk->SetSkyLight(nx, ny, nz, 0);
                         lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel >= lightLevel)
@@ -551,10 +551,10 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
                     {
-                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        targetChunk->SetSkyLight(nx, ny, nz, 0);
                         lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel >= lightLevel)
@@ -578,10 +578,10 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetSkyLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetSkyLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
                     {
-                        targetChunk->SetSkyLightLevel(nx, ny, nz, 0);
+                        targetChunk->SetSkyLight(nx, ny, nz, 0);
                         lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel >= lightLevel)
@@ -622,32 +622,41 @@ namespace WillowVox::VoxelLighting
         return chunksToRemesh;
     }
 
-    std::unordered_set<glm::ivec3> AddLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z, int lightLevel)
+    std::unordered_set<glm::ivec3> AddLightEmitter(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z, int redLight, int greenLight, int blueLight)
     {
         // Initialize remesh vector
         std::unordered_set<glm::ivec3> chunksToRemesh;
         chunksToRemesh.insert(chunkData->id);
 
         // Initialize BFS
-        std::queue<LightNode> lightQueue;
+        std::queue<LightNode> redQueue;
+        std::queue<LightNode> greenQueue;
+        std::queue<LightNode> blueQueue;
 
         // Set initial light level and enqueue
-        chunkData->SetLightLevel(x, y, z, lightLevel);
-        lightQueue.emplace(x, y, z, chunkData);
+        chunkData->SetRedLight(x, y, z, redLight);
+        if (redLight > 1)
+            redQueue.emplace(x, y, z, chunkData);
+        chunkData->SetGreenLight(x, y, z, greenLight);
+        if (greenLight > 1)
+            greenQueue.emplace(x, y, z, chunkData);
+        chunkData->SetBlueLight(x, y, z, blueLight);
+        if (blueLight > 1)
+            blueQueue.emplace(x, y, z, chunkData);
 
         // BFS for light propagation
-        while (!lightQueue.empty())
+        while (!redQueue.empty())
         {
             // Get node from queue
-            LightNode& node = lightQueue.front();
+            LightNode& node = redQueue.front();
             int x = node.x;
             int y = node.y;
             int z = node.z;
             ChunkData* currentChunk = node.chunk;
-            lightQueue.pop();
+            redQueue.pop();
 
             // Get light level
-            int lightLevel = currentChunk->GetLightLevel(x, y, z);
+            int lightLevel = currentChunk->GetRedLight(x, y, z);
 
             // Propagate to neighbors
             // Negative X
@@ -668,11 +677,11 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
-                        if (targetChunk->GetLightLevel(nx, ny, nz) + 2 <= lightLevel)
+                        if (targetChunk->GetRedLight(nx, ny, nz) + 2 <= lightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetLightLevel(nx, ny, nz, lightLevel - 1);
-                            lightQueue.emplace(nx, ny, nz, targetChunk);
+                            targetChunk->SetRedLight(nx, ny, nz, lightLevel - 1);
+                            redQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
                 }
@@ -695,11 +704,11 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
-                        if (targetChunk->GetLightLevel(nx, ny, nz) + 2 <= lightLevel)
+                        if (targetChunk->GetRedLight(nx, ny, nz) + 2 <= lightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetLightLevel(nx, ny, nz, lightLevel - 1);
-                            lightQueue.emplace(nx, ny, nz, targetChunk);
+                            targetChunk->SetRedLight(nx, ny, nz, lightLevel - 1);
+                            redQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
                 }
@@ -722,11 +731,11 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
-                        if (targetChunk->GetLightLevel(nx, ny, nz) + 2 <= lightLevel)
+                        if (targetChunk->GetRedLight(nx, ny, nz) + 2 <= lightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetLightLevel(nx, ny, nz, lightLevel - 1);
-                            lightQueue.emplace(nx, ny, nz, targetChunk);
+                            targetChunk->SetRedLight(nx, ny, nz, lightLevel - 1);
+                            redQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
                 }
@@ -749,11 +758,11 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
-                        if (targetChunk->GetLightLevel(nx, ny, nz) + 2 <= lightLevel)
+                        if (targetChunk->GetRedLight(nx, ny, nz) + 2 <= lightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetLightLevel(nx, ny, nz, lightLevel - 1);
-                            lightQueue.emplace(nx, ny, nz, targetChunk);
+                            targetChunk->SetRedLight(nx, ny, nz, lightLevel - 1);
+                            redQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
                 }
@@ -776,11 +785,11 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
-                        if (targetChunk->GetLightLevel(nx, ny, nz) + 2 <= lightLevel)
+                        if (targetChunk->GetRedLight(nx, ny, nz) + 2 <= lightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetLightLevel(nx, ny, nz, lightLevel - 1);
-                            lightQueue.emplace(nx, ny, nz, targetChunk);
+                            targetChunk->SetRedLight(nx, ny, nz, lightLevel - 1);
+                            redQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
                 }
@@ -803,11 +812,367 @@ namespace WillowVox::VoxelLighting
                     if (targetChunk->Get(nx, ny, nz) == 0)
                     {
                         // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
-                        if (targetChunk->GetLightLevel(nx, ny, nz) + 2 <= lightLevel)
+                        if (targetChunk->GetRedLight(nx, ny, nz) + 2 <= lightLevel)
                         {
                             // Set light level and enqueue
-                            targetChunk->SetLightLevel(nx, ny, nz, lightLevel - 1);
-                            lightQueue.emplace(nx, ny, nz, targetChunk);
+                            targetChunk->SetRedLight(nx, ny, nz, lightLevel - 1);
+                            redQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+        }
+
+        while (!greenQueue.empty())
+        {
+            // Get node from queue
+            LightNode& node = greenQueue.front();
+            int x = node.x;
+            int y = node.y;
+            int z = node.z;
+            ChunkData* currentChunk = node.chunk;
+            greenQueue.pop();
+
+            // Get light level
+            int lightLevel = currentChunk->GetGreenLight(x, y, z);
+
+            // Propagate to neighbors
+            // Negative X
+            {
+                int nx = x - 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(-1, 0, 0));
+                    nx += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetGreenLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetGreenLight(nx, ny, nz, lightLevel - 1);
+                            greenQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Positive X
+            {
+                int nx = x + 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(1, 0, 0));
+                    nx -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetGreenLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetGreenLight(nx, ny, nz, lightLevel - 1);
+                            greenQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Negative Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z - 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, -1));
+                    nz += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetGreenLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetGreenLight(nx, ny, nz, lightLevel - 1);
+                            greenQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Positive Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z + 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, 1));
+                    nz -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetGreenLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetGreenLight(nx, ny, nz, lightLevel - 1);
+                            greenQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Negative Y
+            {
+                int nx = x;
+                int ny = y - 1;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, -1, 0));
+                    ny += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetGreenLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetGreenLight(nx, ny, nz, lightLevel - 1);
+                            greenQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Positive Y
+            {
+                int nx = x;
+                int ny = y + 1;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 1, 0));
+                    ny -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetGreenLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetGreenLight(nx, ny, nz, lightLevel - 1);
+                            greenQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+        }
+
+        while (!blueQueue.empty())
+        {
+            // Get node from queue
+            LightNode& node = blueQueue.front();
+            int x = node.x;
+            int y = node.y;
+            int z = node.z;
+            ChunkData* currentChunk = node.chunk;
+            blueQueue.pop();
+
+            // Get light level
+            int lightLevel = currentChunk->GetBlueLight(x, y, z);
+
+            // Propagate to neighbors
+            // Negative X
+            {
+                int nx = x - 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(-1, 0, 0));
+                    nx += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetBlueLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetBlueLight(nx, ny, nz, lightLevel - 1);
+                            blueQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Positive X
+            {
+                int nx = x + 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(1, 0, 0));
+                    nx -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetBlueLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetBlueLight(nx, ny, nz, lightLevel - 1);
+                            blueQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Negative Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z - 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, -1));
+                    nz += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetBlueLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetBlueLight(nx, ny, nz, lightLevel - 1);
+                            blueQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Positive Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z + 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, 1));
+                    nz -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetBlueLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetBlueLight(nx, ny, nz, lightLevel - 1);
+                            blueQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Negative Y
+            {
+                int nx = x;
+                int ny = y - 1;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, -1, 0));
+                    ny += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetBlueLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetBlueLight(nx, ny, nz, lightLevel - 1);
+                            blueQueue.emplace(nx, ny, nz, targetChunk);
+                        }
+                    }
+                }
+            }
+            // Positive Y
+            {
+                int nx = x;
+                int ny = y + 1;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 1, 0));
+                    ny -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    // Only propagate through non-solid blocks
+                    if (targetChunk->Get(nx, ny, nz) == 0)
+                    {
+                        // Check if light needs to be propagated (only necessary if light level is 2 or more levels less than current node)
+                        if (targetChunk->GetBlueLight(nx, ny, nz) + 2 <= lightLevel)
+                        {
+                            // Set light level and enqueue
+                            targetChunk->SetBlueLight(nx, ny, nz, lightLevel - 1);
+                            blueQueue.emplace(nx, ny, nz, targetChunk);
                         }
                     }
                 }
@@ -824,32 +1189,41 @@ namespace WillowVox::VoxelLighting
         chunksToRemesh.insert(chunkData->id);
 
         // Initialize BFS
-        std::queue<LightRemovalNode> lightRemovalQueue;
+        std::queue<LightRemovalNode> redRemovalQueue;
+        std::queue<LightRemovalNode> greenRemovalQueue;
+        std::queue<LightRemovalNode> blueRemovalQueue;
         std::queue<LightNode> lightPropagationQueue;
 
         // Set initial light level and enqueue
-        int lightLevel = chunkData->GetLightLevel(x, y, z);
-        lightRemovalQueue.emplace(x, y, z, chunkData, lightLevel);
+        int redLight = chunkData->GetRedLight(x, y, z);
+        int greenLight = chunkData->GetGreenLight(x, y, z);
+        int blueLight = chunkData->GetBlueLight(x, y, z);
+        
+        redRemovalQueue.emplace(x, y, z, chunkData, redLight);
+        greenRemovalQueue.emplace(x, y, z, chunkData, greenLight);
+        blueRemovalQueue.emplace(x, y, z, chunkData, blueLight);
 
-        chunkData->SetLightLevel(x, y, z, 0);
+        chunkData->SetRedLight(x, y, z, 0);
+        chunkData->SetGreenLight(x, y, z, 0);
+        chunkData->SetBlueLight(x, y, z, 0);
 
         // BFS for light removal
-        while (!lightRemovalQueue.empty())
+        while (!greenRemovalQueue.empty())
         {
             // Get node from queue
-            LightRemovalNode& node = lightRemovalQueue.front();
+            LightRemovalNode& node = greenRemovalQueue.front();
             int x = node.x;
             int y = node.y;
             int z = node.z;
             int lightLevel = node.value;
             ChunkData* currentChunk = node.chunk;
-            lightRemovalQueue.pop();
+            greenRemovalQueue.pop();
 
             // Propagate to neighbors
             //      If their light level is not 0 and is less than the current node,
             //      add them to the queue and set their light level to zero.
             //      Else if it is >= current node, add it to light propagation queue.
-            
+
             // Negative X
             {
                 int nx = x - 1;
@@ -864,11 +1238,11 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetGreenLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
                     {
-                        targetChunk->SetLightLevel(nx, ny, nz, 0);
-                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                        targetChunk->SetGreenLight(nx, ny, nz, 0);
+                        greenRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel >= lightLevel)
                     {
@@ -891,11 +1265,11 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetGreenLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
                     {
-                        targetChunk->SetLightLevel(nx, ny, nz, 0);
-                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                        targetChunk->SetGreenLight(nx, ny, nz, 0);
+                        greenRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel >= lightLevel)
                     {
@@ -918,11 +1292,11 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetGreenLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
                     {
-                        targetChunk->SetLightLevel(nx, ny, nz, 0);
-                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                        targetChunk->SetGreenLight(nx, ny, nz, 0);
+                        greenRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel >= lightLevel)
                     {
@@ -945,11 +1319,11 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetGreenLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
                     {
-                        targetChunk->SetLightLevel(nx, ny, nz, 0);
-                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                        targetChunk->SetGreenLight(nx, ny, nz, 0);
+                        greenRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel >= lightLevel)
                     {
@@ -972,11 +1346,11 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetGreenLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
                     {
-                        targetChunk->SetLightLevel(nx, ny, nz, 0);
-                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                        targetChunk->SetGreenLight(nx, ny, nz, 0);
+                        greenRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel >= lightLevel)
                     {
@@ -999,11 +1373,371 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
+                    int neighborLightLevel = targetChunk->GetGreenLight(nx, ny, nz);
                     if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
                     {
-                        targetChunk->SetLightLevel(nx, ny, nz, 0);
-                        lightRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                        targetChunk->SetGreenLight(nx, ny, nz, 0);
+                        greenRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+        }
+
+        while (!redRemovalQueue.empty())
+        {
+            // Get node from queue
+            LightRemovalNode& node = redRemovalQueue.front();
+            int x = node.x;
+            int y = node.y;
+            int z = node.z;
+            int lightLevel = node.value;
+            ChunkData* currentChunk = node.chunk;
+            redRemovalQueue.pop();
+
+            // Propagate to neighbors
+            //      If their light level is not 0 and is less than the current node,
+            //      add them to the queue and set their light level to zero.
+            //      Else if it is >= current node, add it to light propagation queue.
+
+            // Negative X
+            {
+                int nx = x - 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(-1, 0, 0));
+                    nx += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetRedLight(nx, ny, nz, 0);
+                        redRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Positive X
+            {
+                int nx = x + 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(1, 0, 0));
+                    nx -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetRedLight(nx, ny, nz, 0);
+                        redRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Negative Y
+            {
+                int nx = x;
+                int ny = y - 1;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, -1, 0));
+                    ny += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetRedLight(nx, ny, nz, 0);
+                        redRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Positive Y
+            {
+                int nx = x;
+                int ny = y + 1;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 1, 0));
+                    ny -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetRedLight(nx, ny, nz, 0);
+                        redRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Negative Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z - 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, -1));
+                    nz += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetRedLight(nx, ny, nz, 0);
+                        redRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Positive Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z + 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, 1));
+                    nz -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetRedLight(nx, ny, nz, 0);
+                        redRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+        }
+
+        while (!blueRemovalQueue.empty())
+        {
+            // Get node from queue
+            LightRemovalNode& node = blueRemovalQueue.front();
+            int x = node.x;
+            int y = node.y;
+            int z = node.z;
+            int lightLevel = node.value;
+            ChunkData* currentChunk = node.chunk;
+            blueRemovalQueue.pop();
+
+            // Propagate to neighbors
+            //      If their light level is not 0 and is less than the current node,
+            //      add them to the queue and set their light level to zero.
+            //      Else if it is >= current node, add it to light propagation queue.
+
+            // Negative X
+            {
+                int nx = x - 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(-1, 0, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(-1, 0, 0));
+                    nx += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetBlueLight(nx, ny, nz, 0);
+                        blueRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Positive X
+            {
+                int nx = x + 1;
+                int ny = y;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (nx >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(1, 0, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(1, 0, 0));
+                    nx -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetBlueLight(nx, ny, nz, 0);
+                        blueRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Negative Y
+            {
+                int nx = x;
+                int ny = y - 1;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, -1, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, -1, 0));
+                    ny += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetBlueLight(nx, ny, nz, 0);
+                        blueRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Positive Y
+            {
+                int nx = x;
+                int ny = y + 1;
+                int nz = z;
+                ChunkData* targetChunk = currentChunk;
+                if (ny >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 1, 0), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 1, 0));
+                    ny -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetBlueLight(nx, ny, nz, 0);
+                        blueRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Negative Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z - 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz < 0)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, -1), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, -1));
+                    nz += CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetBlueLight(nx, ny, nz, 0);
+                        blueRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
+                    }
+                    else if (neighborLightLevel >= lightLevel)
+                    {
+                        // Re-add light emitter
+                        lightPropagationQueue.emplace(nx, ny, nz, targetChunk);
+                    }
+                }
+            }
+            // Positive Z
+            {
+                int nx = x;
+                int ny = y;
+                int nz = z + 1;
+                ChunkData* targetChunk = currentChunk;
+                if (nz >= CHUNK_SIZE)
+                {
+                    targetChunk = chunkManager->GetChunkData(currentChunk->id + glm::ivec3(0, 0, 1), LightingStage::ReadyForLighting).get();
+                    chunksToRemesh.insert(currentChunk->id + glm::ivec3(0, 0, 1));
+                    nz -= CHUNK_SIZE;
+                }
+                if (targetChunk)
+                {
+                    int neighborLightLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborLightLevel != 0 && neighborLightLevel < lightLevel)
+                    {
+                        targetChunk->SetBlueLight(nx, ny, nz, 0);
+                        blueRemovalQueue.emplace(nx, ny, nz, targetChunk, neighborLightLevel);
                     }
                     else if (neighborLightLevel >= lightLevel)
                     {
@@ -1024,8 +1758,10 @@ namespace WillowVox::VoxelLighting
             ChunkData* currentChunk = node.chunk;
             lightPropagationQueue.pop();
 
-            int lightLevel = currentChunk->GetLightLevel(x, y, z);
-            auto newChunks = AddLightEmitter(chunkManager, currentChunk, x, y, z, lightLevel);
+            int redLevel = currentChunk->GetRedLight(x, y, z);
+            int greenLevel = currentChunk->GetGreenLight(x, y, z);
+            int blueLevel = currentChunk->GetBlueLight(x, y, z);
+            auto newChunks = AddLightEmitter(chunkManager, currentChunk, x, y, z, redLevel, greenLevel, blueLevel);
             chunksToRemesh.insert(newChunks.begin(), newChunks.end());
         }
 
@@ -1035,7 +1771,7 @@ namespace WillowVox::VoxelLighting
     std::unordered_set<glm::ivec3> AddLightBlocker(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z)
     {
         // Get light level
-        int lightLevel = chunkData->GetLightLevel(x, y, z);
+        int lightLevel = chunkData->GetBlueLight(x, y, z);
 
         // If light level > 0, remove light that is now being blocked by the new blocker
         if (lightLevel > 0)
@@ -1049,9 +1785,17 @@ namespace WillowVox::VoxelLighting
     std::unordered_set<glm::ivec3> RemoveLightBlocker(ChunkManager* chunkManager, ChunkData* chunkData, int x, int y, int z)
     {
         // Get surrounding light levels and find the max
-        int maxLightLevel = 0;
-        ChunkData* maxLightChunk = chunkData;
-        int maxLightX, maxLightY, maxLightZ;
+        int maxRedLevel = 0;
+        ChunkData* maxRedChunk = chunkData;
+        int maxRedX, maxRedY, maxRedZ;
+
+        int maxGreenLevel = 0;
+        ChunkData* maxGreenChunk = chunkData;
+        int maxGreenX, maxGreenY, maxGreenZ;
+
+        int maxBlueLevel = 0;
+        ChunkData* maxBlueChunk = chunkData;
+        int maxBlueX, maxBlueY, maxBlueZ;
 
         {
             // Negative X
@@ -1067,14 +1811,32 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
-                    if (neighborLightLevel > maxLightLevel)
+                    int neighborRedLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborRedLevel > maxRedLevel)
                     {
-                        maxLightLevel = neighborLightLevel;
-                        maxLightChunk = targetChunk;
-                        maxLightX = nx;
-                        maxLightY = ny;
-                        maxLightZ = nz;
+                        maxRedLevel = neighborRedLevel;
+                        maxRedChunk = targetChunk;
+                        maxRedX = nx;
+                        maxRedY = ny;
+                        maxRedZ = nz;
+                    }
+                    int neighborGreenLevel = targetChunk->GetGreenLight(nx, ny, nz);
+                    if (neighborGreenLevel > maxGreenLevel)
+                    {
+                        maxGreenLevel = neighborGreenLevel;
+                        maxGreenChunk = targetChunk;
+                        maxGreenX = nx;
+                        maxGreenY = ny;
+                        maxGreenZ = nz;
+                    }
+                    int neighborBlueLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborBlueLevel > maxBlueLevel)
+                    {
+                        maxBlueLevel = neighborBlueLevel;
+                        maxBlueChunk = targetChunk;
+                        maxBlueX = nx;
+                        maxBlueY = ny;
+                        maxBlueZ = nz;
                     }
                 }
             }
@@ -1091,14 +1853,32 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
-                    if (neighborLightLevel > maxLightLevel)
+                    int neighborRedLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborRedLevel > maxRedLevel)
                     {
-                        maxLightLevel = neighborLightLevel;
-                        maxLightChunk = targetChunk;
-                        maxLightX = nx;
-                        maxLightY = ny;
-                        maxLightZ = nz;
+                        maxRedLevel = neighborRedLevel;
+                        maxRedChunk = targetChunk;
+                        maxRedX = nx;
+                        maxRedY = ny;
+                        maxRedZ = nz;
+                    }
+                    int neighborGreenLevel = targetChunk->GetGreenLight(nx, ny, nz);
+                    if (neighborGreenLevel > maxGreenLevel)
+                    {
+                        maxGreenLevel = neighborGreenLevel;
+                        maxGreenChunk = targetChunk;
+                        maxGreenX = nx;
+                        maxGreenY = ny;
+                        maxGreenZ = nz;
+                    }
+                    int neighborBlueLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborBlueLevel > maxBlueLevel)
+                    {
+                        maxBlueLevel = neighborBlueLevel;
+                        maxBlueChunk = targetChunk;
+                        maxBlueX = nx;
+                        maxBlueY = ny;
+                        maxBlueZ = nz;
                     }
                 }
             }
@@ -1115,14 +1895,32 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
-                    if (neighborLightLevel > maxLightLevel)
+                    int neighborRedLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborRedLevel > maxRedLevel)
                     {
-                        maxLightLevel = neighborLightLevel;
-                        maxLightChunk = targetChunk;
-                        maxLightX = nx;
-                        maxLightY = ny;
-                        maxLightZ = nz;
+                        maxRedLevel = neighborRedLevel;
+                        maxRedChunk = targetChunk;
+                        maxRedX = nx;
+                        maxRedY = ny;
+                        maxRedZ = nz;
+                    }
+                    int neighborGreenLevel = targetChunk->GetGreenLight(nx, ny, nz);
+                    if (neighborGreenLevel > maxGreenLevel)
+                    {
+                        maxGreenLevel = neighborGreenLevel;
+                        maxGreenChunk = targetChunk;
+                        maxGreenX = nx;
+                        maxGreenY = ny;
+                        maxGreenZ = nz;
+                    }
+                    int neighborBlueLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborBlueLevel > maxBlueLevel)
+                    {
+                        maxBlueLevel = neighborBlueLevel;
+                        maxBlueChunk = targetChunk;
+                        maxBlueX = nx;
+                        maxBlueY = ny;
+                        maxBlueZ = nz;
                     }
                 }
             }
@@ -1139,14 +1937,32 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
-                    if (neighborLightLevel > maxLightLevel)
+                    int neighborRedLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborRedLevel > maxRedLevel)
                     {
-                        maxLightLevel = neighborLightLevel;
-                        maxLightChunk = targetChunk;
-                        maxLightX = nx;
-                        maxLightY = ny;
-                        maxLightZ = nz;
+                        maxRedLevel = neighborRedLevel;
+                        maxRedChunk = targetChunk;
+                        maxRedX = nx;
+                        maxRedY = ny;
+                        maxRedZ = nz;
+                    }
+                    int neighborGreenLevel = targetChunk->GetGreenLight(nx, ny, nz);
+                    if (neighborGreenLevel > maxGreenLevel)
+                    {
+                        maxGreenLevel = neighborGreenLevel;
+                        maxGreenChunk = targetChunk;
+                        maxGreenX = nx;
+                        maxGreenY = ny;
+                        maxGreenZ = nz;
+                    }
+                    int neighborBlueLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborBlueLevel > maxBlueLevel)
+                    {
+                        maxBlueLevel = neighborBlueLevel;
+                        maxBlueChunk = targetChunk;
+                        maxBlueX = nx;
+                        maxBlueY = ny;
+                        maxBlueZ = nz;
                     }
                 }
             }
@@ -1163,14 +1979,32 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
-                    if (neighborLightLevel > maxLightLevel)
+                    int neighborRedLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborRedLevel > maxRedLevel)
                     {
-                        maxLightLevel = neighborLightLevel;
-                        maxLightChunk = targetChunk;
-                        maxLightX = nx;
-                        maxLightY = ny;
-                        maxLightZ = nz;
+                        maxRedLevel = neighborRedLevel;
+                        maxRedChunk = targetChunk;
+                        maxRedX = nx;
+                        maxRedY = ny;
+                        maxRedZ = nz;
+                    }
+                    int neighborGreenLevel = targetChunk->GetGreenLight(nx, ny, nz);
+                    if (neighborGreenLevel > maxGreenLevel)
+                    {
+                        maxGreenLevel = neighborGreenLevel;
+                        maxGreenChunk = targetChunk;
+                        maxGreenX = nx;
+                        maxGreenY = ny;
+                        maxGreenZ = nz;
+                    }
+                    int neighborBlueLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborBlueLevel > maxBlueLevel)
+                    {
+                        maxBlueLevel = neighborBlueLevel;
+                        maxBlueChunk = targetChunk;
+                        maxBlueX = nx;
+                        maxBlueY = ny;
+                        maxBlueZ = nz;
                     }
                 }
             }
@@ -1187,26 +2021,56 @@ namespace WillowVox::VoxelLighting
                 }
                 if (targetChunk)
                 {
-                    int neighborLightLevel = targetChunk->GetLightLevel(nx, ny, nz);
-                    if (neighborLightLevel > maxLightLevel)
+                    int neighborRedLevel = targetChunk->GetRedLight(nx, ny, nz);
+                    if (neighborRedLevel > maxRedLevel)
                     {
-                        maxLightLevel = neighborLightLevel;
-                        maxLightChunk = targetChunk;
-                        maxLightX = nx;
-                        maxLightY = ny;
-                        maxLightZ = nz;
+                        maxRedLevel = neighborRedLevel;
+                        maxRedChunk = targetChunk;
+                        maxRedX = nx;
+                        maxRedY = ny;
+                        maxRedZ = nz;
+                    }
+                    int neighborGreenLevel = targetChunk->GetGreenLight(nx, ny, nz);
+                    if (neighborGreenLevel > maxGreenLevel)
+                    {
+                        maxGreenLevel = neighborGreenLevel;
+                        maxGreenChunk = targetChunk;
+                        maxGreenX = nx;
+                        maxGreenY = ny;
+                        maxGreenZ = nz;
+                    }
+                    int neighborBlueLevel = targetChunk->GetBlueLight(nx, ny, nz);
+                    if (neighborBlueLevel > maxBlueLevel)
+                    {
+                        maxBlueLevel = neighborBlueLevel;
+                        maxBlueChunk = targetChunk;
+                        maxBlueX = nx;
+                        maxBlueY = ny;
+                        maxBlueZ = nz;
                     }
                 }
             }
         }
 
-        if (maxLightLevel == 0)
+        std::unordered_set<glm::ivec3> chunksToRemesh;
+
+        // Add light from strongest neighbors
+        if (maxRedLevel > 0)
         {
-            // No surrounding light, nothing to add
-            return {};
+            auto r = AddLightEmitter(chunkManager, maxRedChunk, maxRedX, maxRedY, maxRedZ, maxRedLevel, maxRedChunk->GetGreenLight(maxRedX, maxRedY, maxRedZ), maxRedChunk->GetBlueLight(maxRedX, maxRedY, maxRedZ));
+            chunksToRemesh.insert(r.begin(), r.end());
+        }
+        if (maxGreenLevel > 0)
+        {
+            auto r = AddLightEmitter(chunkManager, maxGreenChunk, maxGreenX, maxGreenY, maxGreenZ, maxGreenChunk->GetRedLight(maxGreenX, maxGreenY, maxGreenZ), maxGreenLevel, maxGreenChunk->GetBlueLight(maxGreenX, maxGreenY, maxGreenZ));
+            chunksToRemesh.insert(r.begin(), r.end());
+        }
+        if (maxBlueLevel > 0)
+        {
+            auto r = AddLightEmitter(chunkManager, maxBlueChunk, maxBlueX, maxBlueY, maxBlueZ, maxBlueChunk->GetRedLight(maxBlueX, maxBlueY, maxBlueZ), maxBlueChunk->GetGreenLight(maxBlueX, maxBlueY, maxBlueZ), maxBlueLevel);
+            chunksToRemesh.insert(r.begin(), r.end());
         }
 
-        // Add light from the strongest neighbor
-        return AddLightEmitter(chunkManager, maxLightChunk, maxLightX, maxLightY, maxLightZ, maxLightLevel);
+        return chunksToRemesh;
     }
 }
