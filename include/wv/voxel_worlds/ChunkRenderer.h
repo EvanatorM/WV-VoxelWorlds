@@ -19,12 +19,8 @@ namespace WillowVox
         ChunkRenderer(std::shared_ptr<ChunkData> chunkData, const glm::ivec3& chunkId);
         ~ChunkRenderer();
 
-        void SetNorthData(std::shared_ptr<ChunkData> data) { m_northChunkData = data; }
-        void SetSouthData(std::shared_ptr<ChunkData> data) { m_southChunkData = data; }
-        void SetEastData(std::shared_ptr<ChunkData> data) { m_eastChunkData = data; }
-        void SetWestData(std::shared_ptr<ChunkData> data) { m_westChunkData = data; }
-        void SetUpData(std::shared_ptr<ChunkData> data) { m_upChunkData = data; }
-        void SetDownData(std::shared_ptr<ChunkData> data) { m_downChunkData = data; }
+        // Expects the chunk id axes to be in order of x, y, z
+        void SetNeighboringChunks(const std::array<std::shared_ptr<ChunkData>, 27>& chunks) { m_neighboringChunkData = chunks; }
 
         void Render();
 
@@ -48,12 +44,7 @@ namespace WillowVox
         std::shared_ptr<ChunkData> m_chunkData;
         std::unique_ptr<VertexArrayObject> m_vao;
 
-        std::shared_ptr<ChunkData> m_northChunkData = nullptr;
-        std::shared_ptr<ChunkData> m_southChunkData = nullptr;
-        std::shared_ptr<ChunkData> m_eastChunkData = nullptr;
-        std::shared_ptr<ChunkData> m_westChunkData = nullptr;
-        std::shared_ptr<ChunkData> m_upChunkData = nullptr;
-        std::shared_ptr<ChunkData> m_downChunkData = nullptr;
+        std::array<std::shared_ptr<ChunkData>, 27> m_neighboringChunkData;
 
         std::shared_ptr<Shader> m_chunkShader;
 

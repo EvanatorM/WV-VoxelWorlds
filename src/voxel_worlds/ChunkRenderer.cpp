@@ -61,6 +61,50 @@ namespace WillowVox
         vertexCount += 4;
     }
 
+    inline std::shared_ptr<ChunkData> GetChunk(const std::array<std::shared_ptr<ChunkData>, 27>& chunks, int& x, int& y, int& z)
+    {
+        // Chunk coords
+        int cx = 1;
+        int cy = 1;
+        int cz = 1;
+
+        if (x < 0)
+        {
+            x = CHUNK_SIZE - 1;
+            cx--;
+        }
+        else if (x > CHUNK_SIZE - 1)
+        {
+            x = 0;
+            cx++;
+        }
+        
+        if (y < 0)
+        {
+            y = CHUNK_SIZE - 1;
+            cy--;
+        }
+        else if (y > CHUNK_SIZE - 1)
+        {
+            y = 0;
+            cy++;
+        }
+
+        if (z < 0)
+        {
+            z = CHUNK_SIZE - 1;
+            cz--;
+        }
+        else if (z > CHUNK_SIZE - 1)
+        {
+            z = 0;
+            cz++;
+        }
+
+        // Assumes order x, y, z
+        return chunks[cz + cy * 3 + cx * 9];
+    }
+
     void ChunkRenderer::GenerateMesh(uint32_t currentVersion, bool batch)
     {
         if (currentVersion == 0)
@@ -95,28 +139,12 @@ namespace WillowVox
 
                     // South Face
                     {
-                        bool south;
-                        if (z + 1 >= CHUNK_SIZE)
-                        {
-                            if (m_southChunkData)
-                                south = m_southChunkData->Get(x, y, 0) == 0;
-                            else
-                                south = true;
-                        }
-                        else
-                            south = m_chunkData->Get(x, y, z + 1) == 0;
+                        int bx = x, by = y, bz = z + 1;
+                        auto nData = GetChunk(m_neighboringChunkData, bx, by, bz);
+                        bool south = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (south)
                         {
-                            uint16_t lightData;
-                            if (z + 1 >= CHUNK_SIZE)
-                            {
-                                if (m_southChunkData)
-                                    lightData = m_southChunkData->GetLightData(x, y, 0);
-                                else
-                                    lightData = 0;
-                            }
-                            else
-                                lightData = m_chunkData->GetLightData(x, y, z + 1);
+                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                             // South Face
                             vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMinY, lightData });
@@ -130,28 +158,12 @@ namespace WillowVox
 
                     // North Face
                     {
-                        bool north;
-                        if (z < 1)
-                        {
-                            if (m_northChunkData)
-                                north = m_northChunkData->Get(x, y, CHUNK_SIZE - 1) == 0;
-                            else
-                                north = true;
-                        }
-                        else
-                            north = m_chunkData->Get(x, y, z - 1) == 0;
+                        int bx = x, by = y, bz = z - 1;
+                        auto nData = GetChunk(m_neighboringChunkData, bx, by, bz);
+                        bool north = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (north)
                         {
-                            uint16_t lightData;
-                            if (z < 1)
-                            {
-                                if (m_northChunkData)
-                                    lightData = m_northChunkData->GetLightData(x, y, CHUNK_SIZE - 1);
-                                else
-                                    lightData = 0;
-                            }
-                            else
-                                lightData = m_chunkData->GetLightData(x, y, z - 1);
+                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                             // North Face
                             vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMinY, lightData });
@@ -164,28 +176,12 @@ namespace WillowVox
                     }
                     // East Face
                     {
-                        bool east;
-                        if (x + 1 >= CHUNK_SIZE)
-                        {
-                            if (m_eastChunkData)
-                                east = m_eastChunkData->Get(0, y, z) == 0;
-                            else
-                                east = true;
-                        }
-                        else
-                            east = m_chunkData->Get(x + 1, y, z) == 0;
+                        int bx = x + 1, by = y, bz = z;
+                        auto nData = GetChunk(m_neighboringChunkData, bx, by, bz);
+                        bool east = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (east)
                         {
-                            uint16_t lightData;
-                            if (x + 1 >= CHUNK_SIZE)
-                            {
-                                if (m_eastChunkData)
-                                    lightData = m_eastChunkData->GetLightData(0, y, z);
-                                else
-                                    lightData = 0;
-                            }
-                            else
-                                lightData = m_chunkData->GetLightData(x + 1, y, z);
+                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                             // East Face
                             vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData });
@@ -198,28 +194,12 @@ namespace WillowVox
                     }
                     // West Face
                     {
-                        bool west;
-                        if (x < 1)
-                        {
-                            if (m_westChunkData)
-                                west = m_westChunkData->Get(CHUNK_SIZE - 1, y, z) == 0;
-                            else
-                                west = true;
-                        }
-                        else
-                            west = m_chunkData->Get(x - 1, y, z) == 0;
+                        int bx = x - 1, by = y, bz = z;
+                        auto nData = GetChunk(m_neighboringChunkData, bx, by, bz);
+                        bool west = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (west)
                         {
-                            uint16_t lightData;
-                            if (x < 1)
-                            {
-                                if (m_westChunkData)
-                                    lightData = m_westChunkData->GetLightData(CHUNK_SIZE - 1, y, z);
-                                else
-                                    lightData = 0;
-                            }
-                            else
-                                lightData = m_chunkData->GetLightData(x - 1, y, z);
+                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                             // West Face
                             vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData });
@@ -232,28 +212,12 @@ namespace WillowVox
                     }
                     // Up Face
                     {
-                        bool up;
-                        if (y + 1 >= CHUNK_SIZE)
-                        {
-                            if (m_upChunkData)
-                                up = m_upChunkData->Get(x, 0, z) == 0;
-                            else
-                                up = true;
-                        }
-                        else
-                            up = m_chunkData->Get(x, y + 1, z) == 0;
+                        int bx = x, by = y + 1, bz = z;
+                        auto nData = GetChunk(m_neighboringChunkData, bx, by, bz);
+                        bool up = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (up)
                         {
-                            uint16_t lightData;
-                            if (y + 1 >= CHUNK_SIZE)
-                            {
-                                if (m_upChunkData)
-                                    lightData = m_upChunkData->GetLightData(x, 0, z);
-                                else
-                                    lightData = 0;
-                            }
-                            else
-                                lightData = m_chunkData->GetLightData(x, y + 1, z);
+                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                             // Up Face
                             vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMinX, block.topTexMinY, lightData });
@@ -266,28 +230,12 @@ namespace WillowVox
                     }
                     // Down Face
                     {
-                        bool down;
-                        if (y < 1)
-                        {
-                            if (m_downChunkData)
-                                down = m_downChunkData->Get(x, CHUNK_SIZE - 1, z) == 0;
-                            else
-                                down = true;
-                        }
-                        else
-                            down = m_chunkData->Get(x, y - 1, z) == 0;
+                        int bx = x, by = y - 1, bz = z;
+                        auto nData = GetChunk(m_neighboringChunkData, bx, by, bz);
+                        bool down = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (down)
                         {
-                            uint16_t lightData;
-                            if (y < 1)
-                            {
-                                if (m_downChunkData)
-                                    lightData = m_downChunkData->GetLightData(x, CHUNK_SIZE - 1, z);
-                                else
-                                    lightData = 0;
-                            }
-                            else
-                                lightData = m_chunkData->GetLightData(x, y - 1, z);
+                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                             // Down Face
                             vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMinY, lightData });

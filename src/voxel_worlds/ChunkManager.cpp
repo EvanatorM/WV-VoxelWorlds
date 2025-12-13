@@ -822,12 +822,20 @@ namespace WillowVox
                 auto chunk = std::make_shared<ChunkRenderer>(m_chunkData[id], id);
 
                 // Set neighboring chunks
-                chunk->SetSouthData(GetChunkData({ id.x, id.y, id.z + 1 }));
-                chunk->SetNorthData(GetChunkData({ id.x, id.y, id.z - 1 }));
-                chunk->SetEastData(GetChunkData({ id.x + 1, id.y, id.z }));
-                chunk->SetWestData(GetChunkData({ id.x - 1, id.y, id.z }));
-                chunk->SetUpData(GetChunkData({ id.x, id.y + 1, id.z }));
-                chunk->SetDownData(GetChunkData({ id.x, id.y - 1, id.z }));
+                std::array<std::shared_ptr<ChunkData>, 27> neighbors;
+                int i = 0;
+                for (int x = id.x - 1; x <= id.x + 1; x++)
+                {
+                    for (int y = id.y - 1; y <= id.y + 1; y++)
+                    {
+                        for (int z = id.z - 1; z <= id.z + 1; z++, i++)
+                        {
+                            neighbors[i] = GetChunkData({ x, y, z });
+                        }
+                    }
+                }
+
+                chunk->SetNeighboringChunks(neighbors);
 
                 // Generate chunk mesh data
                 chunk->GenerateMesh();
