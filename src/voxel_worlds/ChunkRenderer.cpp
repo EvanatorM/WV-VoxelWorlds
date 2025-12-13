@@ -27,9 +27,9 @@ namespace WillowVox
         if (!m_vao)
         {
             m_vao = std::make_unique<VertexArrayObject>();
-            m_vao->SetAttribPointer(0, 3, VertexBufferAttribType::FLOAT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, pos));
-            m_vao->SetAttribPointer(1, 3, VertexBufferAttribType::FLOAT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, normal));
-            m_vao->SetAttribPointer(2, 2, VertexBufferAttribType::FLOAT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, texPos));
+            m_vao->SetAttribPointer(0, 3, VertexBufferAttribType::FLOAT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, px));
+            m_vao->SetAttribPointer(1, 3, VertexBufferAttribType::FLOAT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, nx));
+            m_vao->SetAttribPointer(2, 2, VertexBufferAttribType::FLOAT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, u));
             m_vao->SetAttribPointer(3, 1, VertexBufferAttribType::UINT16, false, sizeof(ChunkVertex), offsetof(ChunkVertex, lightData));
         }
 
@@ -119,10 +119,10 @@ namespace WillowVox
                                 lightData = m_chunkData->GetLightData(x, y, z + 1);
 
                             // South Face
-                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMinX, block.sideTexMinY }, lightData });
-                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, 0, 1 }, { block.sideTexMaxX, block.sideTexMinY }, lightData });
-                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 0, 0, 1 }, { block.sideTexMinX, block.sideTexMaxY }, lightData });
-                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { 0, 0, 1 }, { block.sideTexMaxX, block.sideTexMaxY }, lightData });
+                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMinY, lightData });
+                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMinY, lightData });
+                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMaxY, lightData });
+                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMaxY, lightData });
 
                             AddIndices(indices, vertexCount);
                         }
@@ -154,10 +154,10 @@ namespace WillowVox
                                 lightData = m_chunkData->GetLightData(x, y, z - 1);
 
                             // North Face
-                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMinX, block.sideTexMinY }, lightData });
-                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 0, 0, -1 }, { block.sideTexMaxX, block.sideTexMinY }, lightData });
-                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { 0, 0, -1 }, { block.sideTexMinX, block.sideTexMaxY }, lightData });
-                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 0, 0, -1 }, { block.sideTexMaxX, block.sideTexMaxY }, lightData });
+                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMinY, lightData });
+                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMinY, lightData });
+                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMaxY, lightData });
+                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMaxY, lightData });
 
                             AddIndices(indices, vertexCount);
                         }
@@ -188,10 +188,10 @@ namespace WillowVox
                                 lightData = m_chunkData->GetLightData(x + 1, y, z);
 
                             // East Face
-                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { -1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightData });
-                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { -1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightData });
-                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { -1, 0, 0 }, { block.sideTexMinX, block.sideTexMaxY }, lightData });
-                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { -1, 0, 0 }, { block.sideTexMaxX, block.sideTexMaxY }, lightData });
+                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData });
+                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMinY, lightData });
+                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMaxY, lightData });
+                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, lightData });
 
                             AddIndices(indices, vertexCount);
                         }
@@ -222,10 +222,10 @@ namespace WillowVox
                                 lightData = m_chunkData->GetLightData(x - 1, y, z);
 
                             // West Face
-                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 1, 0, 0 }, { block.sideTexMinX, block.sideTexMinY }, lightData });
-                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 1, 0, 0 }, { block.sideTexMaxX, block.sideTexMinY }, lightData });
-                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 1, 0, 0 }, { block.sideTexMinX, block.sideTexMaxY }, lightData });
-                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 1, 0, 0 }, { block.sideTexMaxX, block.sideTexMaxY }, lightData });
+                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData });
+                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMinY, lightData });
+                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMaxY, lightData });
+                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, lightData });
 
                             AddIndices(indices, vertexCount);
                         }
@@ -256,10 +256,10 @@ namespace WillowVox
                                 lightData = m_chunkData->GetLightData(x, y + 1, z);
 
                             // Up Face
-                            vertices.push_back({ { x + 0, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMinX, block.topTexMinY }, lightData });
-                            vertices.push_back({ { x + 1, y + 1, z + 1 }, { 0, 1, 0 }, { block.topTexMaxX, block.topTexMinY }, lightData });
-                            vertices.push_back({ { x + 0, y + 1, z + 0 }, { 0, 1, 0 }, { block.topTexMinX, block.topTexMaxY }, lightData });
-                            vertices.push_back({ { x + 1, y + 1, z + 0 }, { 0, 1, 0 }, { block.topTexMaxX, block.topTexMaxY }, lightData });
+                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMinX, block.topTexMinY, lightData });
+                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMaxX, block.topTexMinY, lightData });
+                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMinX, block.topTexMaxY, lightData });
+                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMaxX, block.topTexMaxY, lightData });
 
                             AddIndices(indices, vertexCount);
                         }
@@ -290,10 +290,10 @@ namespace WillowVox
                                 lightData = m_chunkData->GetLightData(x, y - 1, z);
 
                             // Down Face
-                            vertices.push_back({ { x + 1, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMinX, block.bottomTexMinY }, lightData });
-                            vertices.push_back({ { x + 0, y + 0, z + 1 }, { 0, -1, 0 }, { block.bottomTexMaxX, block.bottomTexMinY }, lightData });
-                            vertices.push_back({ { x + 1, y + 0, z + 0 }, { 0, -1, 0 }, { block.bottomTexMinX, block.bottomTexMaxY }, lightData });
-                            vertices.push_back({ { x + 0, y + 0, z + 0 }, { 0, -1, 0 }, { block.bottomTexMaxX, block.bottomTexMaxY }, lightData });
+                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMinY, lightData });
+                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMinY, lightData });
+                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMaxY, lightData });
+                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMaxY, lightData });
 
                             AddIndices(indices, vertexCount);
                         }

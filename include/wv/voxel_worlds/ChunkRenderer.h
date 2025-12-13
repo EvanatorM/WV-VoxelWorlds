@@ -10,9 +10,9 @@ namespace WillowVox
     public:
         struct ChunkVertex
         {
-            glm::vec3 pos;
-            glm::vec3 normal;
-            glm::vec2 texPos;
+            float px, py, pz;
+            float nx, ny, nz;
+            float u, v;
             uint16_t lightData;
         };
 
