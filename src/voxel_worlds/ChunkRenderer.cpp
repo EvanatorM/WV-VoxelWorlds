@@ -9,6 +9,8 @@ namespace WillowVox
     int ChunkRenderer::m_meshesGenerated = 0;
 #endif
 
+    bool ChunkRenderer::smoothLighting = true;
+
     ChunkRenderer::ChunkRenderer(std::shared_ptr<ChunkData> chunkData, const glm::ivec3& chunkId)
         : m_chunkData(chunkData), m_chunkId(chunkId), m_chunkPos(chunkId* CHUNK_SIZE)
     {
@@ -217,13 +219,228 @@ namespace WillowVox
                         bool up = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (up)
                         {
-                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+                            if (smoothLighting)
+                            {
+                                // Up Face
+                                {
+                                    int r = nData->GetRedLight(bx, by, bz);
+                                    int g = nData->GetGreenLight(bx, by, bz);
+                                    int b = nData->GetBlueLight(bx, by, bz);
+                                    int s = nData->GetSkyLight(bx, by, bz);
+                                    int n = 1;
+                                    
+                                    {
+                                        int lx = bx - 1, ly = by, lz = bz;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
+                                    {
+                                        int lx = bx, ly = by, lz = bz + 1;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
+                                    {
+                                        int lx = bx - 1, ly = by, lz = bz + 1;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
 
-                            // Up Face
-                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMinX, block.topTexMinY, lightData });
-                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMaxX, block.topTexMinY, lightData });
-                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMinX, block.topTexMaxY, lightData });
-                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMaxX, block.topTexMaxY, lightData });
+                                    uint16_t lightData = 0;
+                                    lightData = (lightData & 0x0FFF) | ((s / n) << 12);
+                                    lightData = (lightData & 0xF0FF) | ((r / n) << 8);
+                                    lightData = (lightData & 0xFF0F) | ((g / n) << 4);
+                                    lightData = (lightData & 0xFFF0) | ((b / n) << 0);
+
+                                    vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMinX, block.topTexMinY, lightData });
+                                }
+                                {
+                                    int r = nData->GetRedLight(bx, by, bz);
+                                    int g = nData->GetGreenLight(bx, by, bz);
+                                    int b = nData->GetBlueLight(bx, by, bz);
+                                    int s = nData->GetSkyLight(bx, by, bz);
+                                    int n = 1;
+
+                                    {
+                                        int lx = bx + 1, ly = by, lz = bz;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
+                                    {
+                                        int lx = bx, ly = by, lz = bz + 1;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
+                                    {
+                                        int lx = bx + 1, ly = by, lz = bz + 1;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
+
+                                    uint16_t lightData = 0;
+                                    lightData = (lightData & 0x0FFF) | ((s / n) << 12);
+                                    lightData = (lightData & 0xF0FF) | ((r / n) << 8);
+                                    lightData = (lightData & 0xFF0F) | ((g / n) << 4);
+                                    lightData = (lightData & 0xFFF0) | ((b / n) << 0);
+
+                                    vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMaxX, block.topTexMinY, lightData });
+                                }
+                                {
+                                    int r = nData->GetRedLight(bx, by, bz);
+                                    int g = nData->GetGreenLight(bx, by, bz);
+                                    int b = nData->GetBlueLight(bx, by, bz);
+                                    int s = nData->GetSkyLight(bx, by, bz);
+                                    int n = 1;
+
+                                    {
+                                        int lx = bx - 1, ly = by, lz = bz;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
+                                    {
+                                        int lx = bx, ly = by, lz = bz - 1;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
+                                    {
+                                        int lx = bx - 1, ly = by, lz = bz - 1;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
+
+                                    uint16_t lightData = 0;
+                                    lightData = (lightData & 0x0FFF) | ((s / n) << 12);
+                                    lightData = (lightData & 0xF0FF) | ((r / n) << 8);
+                                    lightData = (lightData & 0xFF0F) | ((g / n) << 4);
+                                    lightData = (lightData & 0xFFF0) | ((b / n) << 0);
+
+                                    vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMinX, block.topTexMaxY, lightData });
+                                }
+                                {
+                                    int r = nData->GetRedLight(bx, by, bz);
+                                    int g = nData->GetGreenLight(bx, by, bz);
+                                    int b = nData->GetBlueLight(bx, by, bz);
+                                    int s = nData->GetSkyLight(bx, by, bz);
+                                    int n = 1;
+
+                                    {
+                                        int lx = bx + 1, ly = by, lz = bz;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
+                                    {
+                                        int lx = bx, ly = by, lz = bz - 1;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
+                                    {
+                                        int lx = bx + 1, ly = by, lz = bz - 1;
+                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
+                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        {
+                                            r += lData->GetRedLight(lx, ly, lz);
+                                            g += lData->GetGreenLight(lx, ly, lz);
+                                            b += lData->GetBlueLight(lx, ly, lz);
+                                            s += lData->GetSkyLight(lx, ly, lz);
+                                            n++;
+                                        }
+                                    }
+
+                                    uint16_t lightData = 0;
+                                    lightData = (lightData & 0x0FFF) | ((s / n) << 12);
+                                    lightData = (lightData & 0xF0FF) | ((r / n) << 8);
+                                    lightData = (lightData & 0xFF0F) | ((g / n) << 4);
+                                    lightData = (lightData & 0xFFF0) | ((b / n) << 0);
+
+                                    vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMaxX, block.topTexMaxY, lightData });
+                                }
+                            }
+                            else
+                            {
+                                uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+
+                                // Up Face
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMinX, block.topTexMinY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMaxX, block.topTexMinY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMinX, block.topTexMaxY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMaxX, block.topTexMaxY, lightData });
+                            }
 
                             AddIndices(indices, vertexCount);
                         }

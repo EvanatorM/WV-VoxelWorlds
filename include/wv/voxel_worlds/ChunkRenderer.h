@@ -27,6 +27,8 @@ namespace WillowVox
         void GenerateMesh(uint32_t currentVersion = 0, bool batch = false);
         void MarkDirty() { m_dirty = true; }
 
+        static void SetSmoothLighting(bool value) { smoothLighting = value; }
+
 #ifdef DEBUG_MODE
         static float m_avgMeshGenTime;
         static int m_meshesGenerated;
@@ -51,5 +53,7 @@ namespace WillowVox
         std::vector<ChunkVertex> m_vertices;
         std::vector<int> m_indices;
         bool m_dirty = true;
+
+        static bool smoothLighting;
     };
 }
