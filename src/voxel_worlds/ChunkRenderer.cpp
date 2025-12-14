@@ -107,6 +107,73 @@ namespace WillowVox
         return chunks[cz + cy * 3 + cx * 9];
     }
 
+    struct templight {
+        int r, g, b, s;
+        bool use;
+
+        static templight Avg(const templight& l1, const templight& l2, const templight& l3, const templight& l4)
+        {
+            templight l;
+            l.r = 0;
+            l.g = 0;
+            l.b = 0;
+            l.s = 0;
+            int n = 0;
+            if (l1.use)
+            {
+                l.r += l1.r;
+                l.g += l1.g;
+                l.b += l1.b;
+                l.s += l1.s;
+                n++;
+            }
+            if (l2.use)
+            {
+                l.r += l2.r;
+                l.g += l2.g;
+                l.b += l2.b;
+                l.s += l2.s;
+                n++;
+            }
+            if (l3.use)
+            {
+                l.r += l3.r;
+                l.g += l3.g;
+                l.b += l3.b;
+                l.s += l3.s;
+                n++;
+            }
+            if (l4.use)
+            {
+                l.r += l4.r;
+                l.g += l4.g;
+                l.b += l4.b;
+                l.s += l4.s;
+                n++;
+            }
+
+            if (n > 0)
+            {
+                l.r /= n;
+                l.g /= n;
+                l.b /= n;
+                l.s /= n;
+            }
+
+            return l;
+        }
+
+        uint16_t GetPackedLightData()
+        {
+            uint16_t lightData = 0;
+            lightData = (lightData & 0x0FFF) | (s << 12);
+            lightData = (lightData & 0xF0FF) | (r << 8);
+            lightData = (lightData & 0xFF0F) | (g << 4);
+            lightData = (lightData & 0xFFF0) | (b << 0);
+            return lightData;
+        }
+    };
+
     void ChunkRenderer::GenerateMesh(uint32_t currentVersion, bool batch)
     {
         if (currentVersion == 0)
@@ -146,13 +213,56 @@ namespace WillowVox
                         bool south = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (south)
                         {
-                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+                            if (smoothLighting)
+                            {
+                                // Get 9 top blocks
+                                std::array<templight, 9> lights;
+                                {
+                                    int lz = z + 1;
+                                    int i = 0;
+                                    for (int ly = y - 1; ly <= y + 1; ly++)
+                                    {
+                                        for (int lx = x - 1; lx <= x + 1; lx++, i++)
+                                        {
+                                            int cx = lx, cy = ly, cz = lz;
+                                            auto lData = GetChunk(m_neighboringChunkData, cx, cy, cz);
+                                            if (lData && lData->Get(cx, cy, cz) == 0)
+                                            {
+                                                lights[i].r = lData->GetRedLight(cx, cy, cz);
+                                                lights[i].g = lData->GetGreenLight(cx, cy, cz);
+                                                lights[i].b = lData->GetBlueLight(cx, cy, cz);
+                                                lights[i].s = lData->GetSkyLight(cx, cy, cz);
+                                                lights[i].use = true;
+                                            }
+                                            else
+                                                lights[i].use = false;
+                                        }
+                                    }
+                                }
 
-                            // South Face
-                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMinY, lightData });
-                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMinY, lightData });
-                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMaxY, lightData });
-                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                                // Create face
+                                templight avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData() });
+                            }
+                            else
+                            {
+                                uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+
+                                // South Face
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMinY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMinY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMaxY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                            }
 
                             AddIndices(indices, vertexCount);
                         }
@@ -165,13 +275,56 @@ namespace WillowVox
                         bool north = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (north)
                         {
-                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+                            if (smoothLighting)
+                            {
+                                // Get 9 top blocks
+                                std::array<templight, 9> lights;
+                                {
+                                    int lz = z - 1;
+                                    int i = 0;
+                                    for (int ly = y - 1; ly <= y + 1; ly++)
+                                    {
+                                        for (int lx = x - 1; lx <= x + 1; lx++, i++)
+                                        {
+                                            int cx = lx, cy = ly, cz = lz;
+                                            auto lData = GetChunk(m_neighboringChunkData, cx, cy, cz);
+                                            if (lData && lData->Get(cx, cy, cz) == 0)
+                                            {
+                                                lights[i].r = lData->GetRedLight(cx, cy, cz);
+                                                lights[i].g = lData->GetGreenLight(cx, cy, cz);
+                                                lights[i].b = lData->GetBlueLight(cx, cy, cz);
+                                                lights[i].s = lData->GetSkyLight(cx, cy, cz);
+                                                lights[i].use = true;
+                                            }
+                                            else
+                                                lights[i].use = false;
+                                        }
+                                    }
+                                }
 
-                            // North Face
-                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMinY, lightData });
-                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMinY, lightData });
-                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMaxY, lightData });
-                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                                // Create face
+                                templight avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData() });
+                            }
+                            else
+                            {
+                                uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+
+                                // North Face
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMinY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMinY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMaxY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                            }
 
                             AddIndices(indices, vertexCount);
                         }
@@ -183,13 +336,56 @@ namespace WillowVox
                         bool east = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (east)
                         {
-                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+                            if (smoothLighting)
+                            {
+                                // Get 9 top blocks
+                                std::array<templight, 9> lights;
+                                {
+                                    int lx = x + 1;
+                                    int i = 0;
+                                    for (int ly = y - 1; ly <= y + 1; ly++)
+                                    {
+                                        for (int lz = z - 1; lz <= z + 1; lz++, i++)
+                                        {
+                                            int cx = lx, cy = ly, cz = lz;
+                                            auto lData = GetChunk(m_neighboringChunkData, cx, cy, cz);
+                                            if (lData && lData->Get(cx, cy, cz) == 0)
+                                            {
+                                                lights[i].r = lData->GetRedLight(cx, cy, cz);
+                                                lights[i].g = lData->GetGreenLight(cx, cy, cz);
+                                                lights[i].b = lData->GetBlueLight(cx, cy, cz);
+                                                lights[i].s = lData->GetSkyLight(cx, cy, cz);
+                                                lights[i].use = true;
+                                            }
+                                            else
+                                                lights[i].use = false;
+                                        }
+                                    }
+                                }
 
-                            // East Face
-                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData });
-                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMinY, lightData });
-                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMaxY, lightData });
-                            vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                                // Create face
+                                templight avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData() });
+                            }
+                            else
+                            {
+                                uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+
+                                // East Face
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMinY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMaxY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                            }
 
                             AddIndices(indices, vertexCount);
                         }
@@ -201,13 +397,56 @@ namespace WillowVox
                         bool west = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (west)
                         {
-                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+                            if (smoothLighting)
+                            {
+                                // Get 9 top blocks
+                                std::array<templight, 9> lights;
+                                {
+                                    int lx = x - 1;
+                                    int i = 0;
+                                    for (int ly = y - 1; ly <= y + 1; ly++)
+                                    {
+                                        for (int lz = z - 1; lz <= z + 1; lz++, i++)
+                                        {
+                                            int cx = lx, cy = ly, cz = lz;
+                                            auto lData = GetChunk(m_neighboringChunkData, cx, cy, cz);
+                                            if (lData && lData->Get(cx, cy, cz) == 0)
+                                            {
+                                                lights[i].r = lData->GetRedLight(cx, cy, cz);
+                                                lights[i].g = lData->GetGreenLight(cx, cy, cz);
+                                                lights[i].b = lData->GetBlueLight(cx, cy, cz);
+                                                lights[i].s = lData->GetSkyLight(cx, cy, cz);
+                                                lights[i].use = true;
+                                            }
+                                            else
+                                                lights[i].use = false;
+                                        }
+                                    }
+                                }
 
-                            // West Face
-                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData });
-                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMinY, lightData });
-                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMaxY, lightData });
-                            vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                                // Create face
+                                templight avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData() });
+                            }
+                            else
+                            {
+                                uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+
+                                // West Face
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMinY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMaxY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                            }
 
                             AddIndices(indices, vertexCount);
                         }
@@ -221,215 +460,43 @@ namespace WillowVox
                         {
                             if (smoothLighting)
                             {
-                                // Up Face
+                                // Get 9 top blocks
+                                std::array<templight, 9> lights;
                                 {
-                                    int r = nData->GetRedLight(bx, by, bz);
-                                    int g = nData->GetGreenLight(bx, by, bz);
-                                    int b = nData->GetBlueLight(bx, by, bz);
-                                    int s = nData->GetSkyLight(bx, by, bz);
-                                    int n = 1;
-                                    
+                                    int ly = y + 1;
+                                    int i = 0;
+                                    for (int lz = z - 1; lz <= z + 1; lz++)
                                     {
-                                        int lx = bx - 1, ly = by, lz = bz;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
+                                        for (int lx = x - 1; lx <= x + 1; lx++, i++)
                                         {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
+                                            int cx = lx, cy = ly, cz = lz;
+                                            auto lData = GetChunk(m_neighboringChunkData, cx, cy, cz);
+                                            if (lData && lData->Get(cx, cy, cz) == 0)
+                                            {
+                                                lights[i].r = lData->GetRedLight(cx, cy, cz);
+                                                lights[i].g = lData->GetGreenLight(cx, cy, cz);
+                                                lights[i].b = lData->GetBlueLight(cx, cy, cz);
+                                                lights[i].s = lData->GetSkyLight(cx, cy, cz);
+                                                lights[i].use = true;
+                                            }
+                                            else
+                                                lights[i].use = false;
                                         }
                                     }
-                                    {
-                                        int lx = bx, ly = by, lz = bz + 1;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
-                                        {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
-                                        }
-                                    }
-                                    {
-                                        int lx = bx - 1, ly = by, lz = bz + 1;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
-                                        {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
-                                        }
-                                    }
-
-                                    uint16_t lightData = 0;
-                                    lightData = (lightData & 0x0FFF) | ((s / n) << 12);
-                                    lightData = (lightData & 0xF0FF) | ((r / n) << 8);
-                                    lightData = (lightData & 0xFF0F) | ((g / n) << 4);
-                                    lightData = (lightData & 0xFFF0) | ((b / n) << 0);
-
-                                    vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMinX, block.topTexMinY, lightData });
                                 }
-                                {
-                                    int r = nData->GetRedLight(bx, by, bz);
-                                    int g = nData->GetGreenLight(bx, by, bz);
-                                    int b = nData->GetBlueLight(bx, by, bz);
-                                    int s = nData->GetSkyLight(bx, by, bz);
-                                    int n = 1;
 
-                                    {
-                                        int lx = bx + 1, ly = by, lz = bz;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
-                                        {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
-                                        }
-                                    }
-                                    {
-                                        int lx = bx, ly = by, lz = bz + 1;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
-                                        {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
-                                        }
-                                    }
-                                    {
-                                        int lx = bx + 1, ly = by, lz = bz + 1;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
-                                        {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
-                                        }
-                                    }
+                                // Create face
+                                templight avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMinX, block.topTexMinY, avg.GetPackedLightData() });
 
-                                    uint16_t lightData = 0;
-                                    lightData = (lightData & 0x0FFF) | ((s / n) << 12);
-                                    lightData = (lightData & 0xF0FF) | ((r / n) << 8);
-                                    lightData = (lightData & 0xFF0F) | ((g / n) << 4);
-                                    lightData = (lightData & 0xFFF0) | ((b / n) << 0);
+                                avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMaxX, block.topTexMinY, avg.GetPackedLightData() });
 
-                                    vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMaxX, block.topTexMinY, lightData });
-                                }
-                                {
-                                    int r = nData->GetRedLight(bx, by, bz);
-                                    int g = nData->GetGreenLight(bx, by, bz);
-                                    int b = nData->GetBlueLight(bx, by, bz);
-                                    int s = nData->GetSkyLight(bx, by, bz);
-                                    int n = 1;
+                                avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMinX, block.topTexMaxY, avg.GetPackedLightData() });
 
-                                    {
-                                        int lx = bx - 1, ly = by, lz = bz;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
-                                        {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
-                                        }
-                                    }
-                                    {
-                                        int lx = bx, ly = by, lz = bz - 1;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
-                                        {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
-                                        }
-                                    }
-                                    {
-                                        int lx = bx - 1, ly = by, lz = bz - 1;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
-                                        {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
-                                        }
-                                    }
-
-                                    uint16_t lightData = 0;
-                                    lightData = (lightData & 0x0FFF) | ((s / n) << 12);
-                                    lightData = (lightData & 0xF0FF) | ((r / n) << 8);
-                                    lightData = (lightData & 0xFF0F) | ((g / n) << 4);
-                                    lightData = (lightData & 0xFFF0) | ((b / n) << 0);
-
-                                    vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMinX, block.topTexMaxY, lightData });
-                                }
-                                {
-                                    int r = nData->GetRedLight(bx, by, bz);
-                                    int g = nData->GetGreenLight(bx, by, bz);
-                                    int b = nData->GetBlueLight(bx, by, bz);
-                                    int s = nData->GetSkyLight(bx, by, bz);
-                                    int n = 1;
-
-                                    {
-                                        int lx = bx + 1, ly = by, lz = bz;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
-                                        {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
-                                        }
-                                    }
-                                    {
-                                        int lx = bx, ly = by, lz = bz - 1;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
-                                        {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
-                                        }
-                                    }
-                                    {
-                                        int lx = bx + 1, ly = by, lz = bz - 1;
-                                        auto lData = GetChunk(m_neighboringChunkData, lx, ly, lz);
-                                        if (lData && lData->Get(lx, ly, lz) == 0)
-                                        {
-                                            r += lData->GetRedLight(lx, ly, lz);
-                                            g += lData->GetGreenLight(lx, ly, lz);
-                                            b += lData->GetBlueLight(lx, ly, lz);
-                                            s += lData->GetSkyLight(lx, ly, lz);
-                                            n++;
-                                        }
-                                    }
-
-                                    uint16_t lightData = 0;
-                                    lightData = (lightData & 0x0FFF) | ((s / n) << 12);
-                                    lightData = (lightData & 0xF0FF) | ((r / n) << 8);
-                                    lightData = (lightData & 0xFF0F) | ((g / n) << 4);
-                                    lightData = (lightData & 0xFFF0) | ((b / n) << 0);
-
-                                    vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMaxX, block.topTexMaxY, lightData });
-                                }
+                                avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMaxX, block.topTexMaxY, avg.GetPackedLightData() });
                             }
                             else
                             {
@@ -452,13 +519,56 @@ namespace WillowVox
                         bool down = nData ? nData->Get(bx, by, bz) == 0 : true;
                         if (down)
                         {
-                            uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+                            if (smoothLighting)
+                            {
+                                // Get 9 top blocks
+                                std::array<templight, 9> lights;
+                                {
+                                    int ly = y - 1;
+                                    int i = 0;
+                                    for (int lz = z - 1; lz <= z + 1; lz++)
+                                    {
+                                        for (int lx = x - 1; lx <= x + 1; lx++, i++)
+                                        {
+                                            int cx = lx, cy = ly, cz = lz;
+                                            auto lData = GetChunk(m_neighboringChunkData, cx, cy, cz);
+                                            if (lData && lData->Get(cx, cy, cz) == 0)
+                                            {
+                                                lights[i].r = lData->GetRedLight(cx, cy, cz);
+                                                lights[i].g = lData->GetGreenLight(cx, cy, cz);
+                                                lights[i].b = lData->GetBlueLight(cx, cy, cz);
+                                                lights[i].s = lData->GetSkyLight(cx, cy, cz);
+                                                lights[i].use = true;
+                                            }
+                                            else
+                                                lights[i].use = false;
+                                        }
+                                    }
+                                }
 
-                            // Down Face
-                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMinY, lightData });
-                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMinY, lightData });
-                            vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMaxY, lightData });
-                            vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMaxY, lightData });
+                                // Create face
+                                templight avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMinY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMinY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMaxY, avg.GetPackedLightData() });
+
+                                avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMaxY, avg.GetPackedLightData() });
+                            }
+                            else
+                            {
+                                uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
+
+                                // Down Face
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMinY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMinY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMaxY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMaxY, lightData });
+                            }
 
                             AddIndices(indices, vertexCount);
                         }
