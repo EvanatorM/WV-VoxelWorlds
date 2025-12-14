@@ -28,6 +28,7 @@ namespace WillowVox
         void MarkDirty() { m_dirty = true; }
 
         static void SetSmoothLighting(bool value) { smoothLighting = value; }
+        static bool smoothLighting;
 
 #ifdef DEBUG_MODE
         static float m_avgMeshGenTime;
@@ -54,6 +55,5 @@ namespace WillowVox
         std::vector<int> m_indices;
         bool m_dirty = true;
 
-        static bool smoothLighting;
     };
 }
