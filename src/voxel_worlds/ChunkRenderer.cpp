@@ -33,6 +33,7 @@ namespace WillowVox
             m_vao->SetAttribPointer(1, 3, VertexBufferAttribType::FLOAT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, nx));
             m_vao->SetAttribPointer(2, 2, VertexBufferAttribType::FLOAT32, false, sizeof(ChunkVertex), offsetof(ChunkVertex, u));
             m_vao->SetAttribPointer(3, 1, VertexBufferAttribType::UINT16, false, sizeof(ChunkVertex), offsetof(ChunkVertex, lightData));
+            m_vao->SetAttribPointer(4, 1, VertexBufferAttribType::UINT8, false, sizeof(ChunkVertex), offsetof(ChunkVertex, ambientOcclusion));
         }
 
         // Buffer data is dirty
@@ -240,28 +241,45 @@ namespace WillowVox
                                     }
                                 }
 
+
                                 // Create face
                                 templight avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData() });
+                                uint8_t ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[3].use) ao++;
+                                if (ao < 2 && !lights[0].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[5].use) ao++;
+                                if (ao < 2 && !lights[2].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[3].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[6].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[5].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[8].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData(), ao });
                             }
                             else
                             {
                                 uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                                 // South Face
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMinY, lightData });
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMinY, lightData });
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMaxY, lightData });
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMinX, block.sideTexMaxY, lightData, 0 });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 0, 1, block.sideTexMaxX, block.sideTexMaxY, lightData, 0 });
                             }
 
                             AddIndices(indices, vertexCount);
@@ -304,26 +322,42 @@ namespace WillowVox
 
                                 // Create face
                                 templight avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData() });
+                                uint8_t ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[5].use) ao++;
+                                if (ao < 2 && !lights[2].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[3].use) ao++;
+                                if (ao < 2 && !lights[0].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[5].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[8].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[3].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[6].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData(), ao });
                             }
                             else
                             {
                                 uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                                 // North Face
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMinY, lightData });
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMinY, lightData });
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMaxY, lightData });
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMinX, block.sideTexMaxY, lightData, 0 });
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 0, -1, block.sideTexMaxX, block.sideTexMaxY, lightData, 0 });
                             }
 
                             AddIndices(indices, vertexCount);
@@ -365,26 +399,42 @@ namespace WillowVox
 
                                 // Create face
                                 templight avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData() });
+                                uint8_t ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[5].use) ao++;
+                                if (ao < 2 && !lights[2].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[3].use) ao++;
+                                if (ao < 2 && !lights[0].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[5].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[8].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[3].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[6].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData(), ao });
                             }
                             else
                             {
                                 uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                                 // East Face
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData });
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMinY, lightData });
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMaxY, lightData });
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, -1, 0, 0, block.sideTexMinX, block.sideTexMaxY, lightData, 0 });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, -1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, lightData, 0 });
                             }
 
                             AddIndices(indices, vertexCount);
@@ -426,26 +476,42 @@ namespace WillowVox
 
                                 // Create face
                                 templight avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData() });
+                                uint8_t ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[3].use) ao++;
+                                if (ao < 2 && !lights[0].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[5].use) ao++;
+                                if (ao < 2 && !lights[2].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[3].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[6].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMaxY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[5].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[8].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, avg.GetPackedLightData(), ao });
                             }
                             else
                             {
                                 uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                                 // West Face
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData });
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMinY, lightData });
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMaxY, lightData });
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 1, 0, 0, block.sideTexMinX, block.sideTexMaxY, lightData, 0 });
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 1, 0, 0, block.sideTexMaxX, block.sideTexMaxY, lightData, 0 });
                             }
 
                             AddIndices(indices, vertexCount);
@@ -487,26 +553,42 @@ namespace WillowVox
 
                                 // Create face
                                 templight avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMinX, block.topTexMinY, avg.GetPackedLightData() });
+                                uint8_t ao = 0;
+                                if (!lights[3].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[6].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMinX, block.topTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMaxX, block.topTexMinY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[5].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[8].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMaxX, block.topTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMinX, block.topTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[3].use) ao++;
+                                if (ao < 2 && !lights[0].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMinX, block.topTexMaxY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMaxX, block.topTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[5].use) ao++;
+                                if (ao < 2 && !lights[2].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMaxX, block.topTexMaxY, avg.GetPackedLightData(), ao });
                             }
                             else
                             {
                                 uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                                 // Up Face
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMinX, block.topTexMinY, lightData });
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMaxX, block.topTexMinY, lightData });
-                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMinX, block.topTexMaxY, lightData });
-                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMaxX, block.topTexMaxY, lightData });
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMinX, block.topTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 1.0f, 0, 1, 0, block.topTexMaxX, block.topTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 0.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMinX, block.topTexMaxY, lightData, 0 });
+                                vertices.push_back({ x + 1.0f, y + 1.0f, z + 0.0f, 0, 1, 0, block.topTexMaxX, block.topTexMaxY, lightData, 0 });
                             }
 
                             AddIndices(indices, vertexCount);
@@ -548,26 +630,42 @@ namespace WillowVox
 
                                 // Create face
                                 templight avg = templight::Avg(lights[4], lights[5], lights[7], lights[8]);
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMinY, avg.GetPackedLightData() });
+                                uint8_t ao = 0;
+                                if (!lights[5].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[8].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[3], lights[4], lights[6], lights[7]);
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMinY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[3].use) ao++;
+                                if (!lights[7].use) ao++;
+                                if (ao < 2 && !lights[6].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMinY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[1], lights[2], lights[4], lights[5]);
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[5].use) ao++;
+                                if (ao < 2 && !lights[2].use) ao++;
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMaxY, avg.GetPackedLightData(), ao });
 
                                 avg = templight::Avg(lights[0], lights[1], lights[3], lights[4]);
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMaxY, avg.GetPackedLightData() });
+                                ao = 0;
+                                if (!lights[1].use) ao++;
+                                if (!lights[3].use) ao++;
+                                if (ao < 2 && !lights[0].use) ao++;
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMaxY, avg.GetPackedLightData(), ao });
                             }
                             else
                             {
                                 uint16_t lightData = nData ? nData->GetLightData(bx, by, bz) : 0;
 
                                 // Down Face
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMinY, lightData });
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMinY, lightData });
-                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMaxY, lightData });
-                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMaxY, lightData });
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 1.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMinY, lightData, 0 });
+                                vertices.push_back({ x + 1.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMinX, block.bottomTexMaxY, lightData, 0 });
+                                vertices.push_back({ x + 0.0f, y + 0.0f, z + 0.0f, 0, -1, 0, block.bottomTexMaxX, block.bottomTexMaxY, lightData, 0 });
                             }
 
                             AddIndices(indices, vertexCount);

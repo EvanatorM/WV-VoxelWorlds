@@ -14,6 +14,7 @@ namespace WillowVox
             float nx, ny, nz;
             float u, v;
             uint16_t lightData;
+            uint8_t ambientOcclusion;
         };
 
         ChunkRenderer(std::shared_ptr<ChunkData> chunkData, const glm::ivec3& chunkId);
@@ -27,7 +28,6 @@ namespace WillowVox
         void GenerateMesh(uint32_t currentVersion = 0, bool batch = false);
         void MarkDirty() { m_dirty = true; }
 
-        static void SetSmoothLighting(bool value) { smoothLighting = value; }
         static bool smoothLighting;
 
 #ifdef DEBUG_MODE
